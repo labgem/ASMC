@@ -9,6 +9,7 @@ from pathlib import Path
 
 import yaml
 import numpy as np
+from sklearn import preprocessing
 
 ###############
 ## Functions ##
@@ -601,6 +602,92 @@ def read_alignment(file, outdir):
     
     return sequences
 
+def read_matrix(matrix):
+    """Read the distance matrix in tsv format
+
+    Args:
+        matrix (pathlib.Path): Path of the tsv file
+
+    Returns:
+        scoring_dict (dict): Dictionnary of dictionnary for access to each distance between amino acid
+    """
+    
+    scoring_dict  = {}
+    with open(matrix, "r") as f:
+        aa_order = []
+        for i, line in enumerate(f):
+            if i == 0:
+                aa_order = line.strip().split("\t")
+            else:
+                sl = line.strip().split("\t")
+                scoring_dict[sl[0]] = {aa_order[i]:int(sl[1:][i])
+                                       for i in range(len(aa_order))}
+    
+    return scoring_dict
+
+def pairwise_score(scoring_dict, seqA, seqB):
+    """Compute the score (distance) between two sequences
+
+    Args:
+        scoring_dict (dict): Dictionnary of dictionnary for access to each distance between amino acid
+        seqA (str): A sequence
+        seqB (str): A sequence
+
+    Returns:
+        score (int): The score
+    """
+    
+    score = 0
+    for posA, posB in zip(seqA, seqB):
+        if posA in ["-", "X"] or posB in ["-", "X"]:
+            score += 20    
+        else:
+            score += scoring_dict[posA][posB]
+    
+    return score
+
+def dissimilarity(sequences, scoring_dict, ref_clusters):
+    """Build the dissimilarity/distance matrix
+
+    Args:
+        sequences (dict): Dictionnary with the sequence id as key and the corresponding sequence as value
+        scoring_dict (dict): Dictionnary of dictionnary for access to each distance between amino acid
+        ref_clusters (dict): Dictionnary with as key the representative sequence id and as value all members of the cluster, it can be empty
+
+    Returns:
+        data (np.ndarray): The distance matrix
+        key_list (list):  The list of sequences id
+    """
+    
+    data = []
+    if ref_clusters == {}:
+        key_list = list(sequences.keys())
+    else:
+        key_list = list(ref_clusters.keys())
+        
+    for i, key1 in enumerate(key_list):
+        row = []
+        for j, key2 in enumerate(key_list):
+            
+            if key1 == key2:
+                score = 0.0
+            else:
+                score = pairwise_score(scoring_dict,
+                                       sequences[key1],
+                                       sequences[key2])
+                
+            row.append(score)
+        
+        data.append(row)
+    
+    data = np.asarray(data)
+    
+    data = preprocessing.MinMaxScaler().fit_transform(
+        X=data.reshape(-1,1)
+    ).reshape(data.shape)
+
+    return key_list, data
+
 ##########
 ## MAIN ##
 ##########
@@ -740,5 +827,16 @@ if __name__ == "__main__":
      
     logging.info("Reading Multiple Alignment")
     sequences = read_alignment(multiple_alignment, outdir)
+    
+    logging.info("Reading Scoring Matrix")
+    matrix = Path(yml["distances"])
+    scoring_dict = read_matrix(matrix)
+    
+    logging.info("Compute Dissimilarities")
+    key_list, data = dissimilarity(sequences, scoring_dict, {})
+    perc = np.percentile(data, [25, 50, 75])
+    
+    logging.info(f"q1\tmed\tq3\tmean")
+    logging.info(f"{perc[0]:.3f}\t{perc[1]:.3f}\t{perc[2]:.3f}\t{data.mean():.3f}")
     
     logging.info(f"Total Elapsed time: {datetime.datetime.now() -  start}")
