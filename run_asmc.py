@@ -247,6 +247,52 @@ def write_pocket_file(ref, res_dict, outdir, query_chain):
     
     return output
 
+## ------------------------- Homology modeling ------------------------------ ##
+
+def run_build_ali(ref, seq, pocket, outdir, pid, log):
+    """Run build_ali.py
+
+    build_ali.py is the script used to prepare the modeling step.
+
+    Args:
+        ref (patlib.Path): Path to reference file
+        seq (patlib.Path): Path to a multi fasta file
+        pocket (patlib.Path): Path to the pocket file
+        outdir (pathlib.Path): Path to the output directory
+        pid (float): identity cutoff
+
+    Returns:
+        ret (subprocess.CompletedProcess): The completed process
+    """
+    
+    # Absolute path of this file
+    main_path = Path(__file__).absolute()
+    parent_path = main_path.parent
+    # Path of the build_ali.py
+    src_path = Path.joinpath(parent_path, 'src', "build_ali.py")
+
+    # Run the script    
+    command = f"python3 {src_path} -o {outdir} -r {ref} -s {seq} -p {pocket} --id {pid}"
+    try:
+        if log is None:
+            ret = subprocess.run(command.split(), check=True)
+        else:
+            with open(log, "a") as f_log:
+                ret = subprocess.run(command.split(), check=True, stdout=f_log,
+                                        stderr=subprocess.STDOUT)
+    except Exception as error:
+        logging.error(f"An error has occured when lauching the build_ali.py process:\n{error}")
+        sys.exit(1)
+        
+    if ret.returncode != 0:
+        logging.error(f"An error has occured during the build_ali.py process:\n"+
+                      f"{ret.stderr.decode('utf-8')}")
+        sys.exit(1)
+    
+    return ret
+
+
+
 ##########
 ## MAIN ##
 ##########
@@ -270,6 +316,24 @@ if __name__ == "__main__":
     input_opt.add_argument("--chain", type=str, metavar="", default="all",
                            help="Specifies chains for pocket search, separated "+
                            "by ',' only used if --pocket isn't provided [default: all]")
+    targts_opt = parser.add_argument_group("Targets options",
+                                        "If --seqs is given, homology modeling"+
+                                        " is performed. If --models is given, "+
+                                        "homology modeling is not performed "+
+                                        "and if --actice-site is given just "+
+                                        "the clustering is performed")
+    targts_opt_ex = targts_opt.add_mutually_exclusive_group(required=True)
+
+    targts_opt_ex.add_argument("-s","--seqs", type=str, metavar="",
+                            help="multi fasta file or directory containing each single fasta file")
+    targts_opt_ex.add_argument("-m","--models", type=str, metavar="",
+                            help="file containing paths to all models and for each model, his reference")
+    targts_opt_ex.add_argument("-a","--active-site", type=str, metavar="",
+                               help="active site alignment in fasta format")
+    targts_opt.add_argument("--id", type=float, metavar="", default=30.0,
+                            help="percent identity cutoff between target and " +
+                            "reference to build a model of the target, only " +
+                            "used with -s, --seqs [default: 30.0]")
     
     args = parser.parse_args()
     
@@ -315,5 +379,31 @@ if __name__ == "__main__":
             prank_results = run_prank(yml, ds, prank_output)
             pocket_dict = extract_pocket(prank_output)
             pocket_file = write_pocket_file(ref_file, pocket_dict, outdir, args.chain)
+    
+    elif args.seqs is not None or args.models is not None:
+        logging.error(f"argument -r, --ref is required if -s, --seqs or -m, --models is used")
+        sys.exit(1)
+        
+    if not args.seqs is None:
+        seq_path = Path(args.seqs).absolute()
+        if not seq_path.exists():
+            logging.error(f"argument -s/--seqs '{seq_path}' doesn't exist")
+            sys.exit(1)
+        else:
             
+            PID = args.id
+            if PID < 0:
+                logging.error(f"--id negative value: {PID}")
+                sys.exit(f"--id negative value: {PID}")
+                
+            ret_build = run_build_ali(ref_file, seq_path, pocket_file, outdir,
+                                      PID, args.log)
+            job_file = Path.joinpath(outdir, "job_file.txt")
+
+            if not job_file.exists():
+                logging.error(f"An error has occurend during the preparation of the homology modeling")
+                sys.exit(1)
+            else:
+                pass
+     
     logging.info(f"Total Elapsed time: {datetime.datetime.now() -  start}")
