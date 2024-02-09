@@ -3,8 +3,11 @@ import argparse
 import datetime
 import logging
 import subprocess
-import yaml
+from itertools import groupby
 from pathlib import Path
+
+import yaml
+import numpy as np
 
 ###############
 ## Functions ##
@@ -156,6 +159,94 @@ def run_prank(yml, ds, outdir):
     
     return result
 
+def extract_pocket(outdir):
+    """Extract the pocket posistions
+    
+    Reads the p2rank outputs to extract the positions of the best pocket that
+    doesn't overlap several chains
+
+    Args:
+        outdir (pathlib.Path): Path to the output directory
+
+    Returns:
+        res_dict (dict): Dict containing as key the chain and as values the positions
+    """
+    
+    
+    prediction = [f for f in outdir.iterdir() if f.match("*predictions*")][0]
+    if len(prediction) == 0:
+        logging.error(f"No predictions file after running p2rank")
+        sys.exit(1)
+    
+    pred_arr = np.loadtxt(prediction, skiprows=1, delimiter=",",
+                          converters={x:conv for x in range(11)},
+                          dtype=str)
+    
+    # We go through the pockets sorted from best score to worst.
+    # For each pocket, we check whether it's on a single chain.
+    # If so, we retrieve it's positions else we continue.
+    
+    res_dict = {}
+    
+    try:
+        for i in range(len(pred_arr)):
+            res_str = pred_arr[i][9]
+            res_list = [(elem.split("_")[0],
+                            elem.split("_")[1]) for elem in res_str.split()]
+            
+            groups = groupby(res_list, key=lambda x: x[0])
+            for key, g in groups:
+                res_dict[key] = sorted([int(elem[1]) for elem in g])
+                
+            if len(res_dict) > 1:
+                res_dict = {}
+                continue
+            else:
+                break
+    except Exception as error:
+        logging.error(f"An error has occured while reading prediction file from p2rank:\n{error}")
+        sys.exit(1)
+    
+    return res_dict
+
+def conv(x):
+    
+    return x.strip()
+
+def write_pocket_file(ref, res_dict, outdir, query_chain):
+    """Write the pocket file
+
+    Args:
+        ref (patlib.Path): Path to reference file
+        res_dict (dict): Dict containing as key the chain and as values the positions
+        outdir (pathlib.Path): Path to the output directory
+
+    Returns:
+        output (pathlib.Path): Path of the pocket output file
+    """
+    
+    # Get the path of the pdb file used for p2rank
+    pdb = Path(ref.read_text().split("\n")[0])
+    # Get the file name without the extension
+    pdb_id = pdb.stem
+    output = Path.joinpath(outdir, "pocket.csv")
+    
+    try:
+        chain = list(res_dict.keys())[0]
+    except:
+        logging.error(f"0 results for p2rank, this may be due to an incorrect --chain value : {query_chain}")
+        sys.exit(1)
+    
+    res_str = ''
+    for elem in res_dict[chain]:
+        res_str += f',{elem}'
+    
+    text = f"{pdb_id},{chain}{res_str}"
+    
+    output.write_text(text)
+    
+    return output
+
 ##########
 ## MAIN ##
 ##########
@@ -222,5 +313,7 @@ if __name__ == "__main__":
                 
             ds = build_ds(ref_file, prank_output, args.chain)
             prank_results = run_prank(yml, ds, prank_output)
+            pocket_dict = extract_pocket(prank_output)
+            pocket_file = write_pocket_file(ref_file, pocket_dict, outdir, args.chain)
             
     logging.info(f"Total Elapsed time: {datetime.datetime.now() -  start}")
