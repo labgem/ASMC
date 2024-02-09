@@ -90,6 +90,72 @@ def read_yaml():
         
     return yml
 
+## -------------------------- Pocket detection ------------------------------ ##
+
+def build_ds(ref, outdir, chains):
+    """Build dataset file for p2rank
+
+    Args:
+        ref (patlib.Path): Path to reference file
+        outdir (pathlib.Path): Path to the output directory
+        chains (str): String indicating which chain to search
+
+    Returns:
+        ds (pathlib.Path): Path to the builded dataset file
+    """
+    
+    # Use the 1st reference in the file
+    logging.info("Using the 1st reference structure to detect pocket")
+    try:
+        pdb = ref.read_text().split("\n")[0]
+        if not Path(pdb).exists():
+            logging.error(f"Path to the 1st reference structure in reference file doesn't exist: {pdb}")
+    except Exception as error:
+        logging.error(f"An error has occured while reading {ref}:\n{error}")
+        sys.exit(1)
+    
+    # Detect which chain
+    ds = Path.joinpath(outdir, "data.ds")
+    if chains == "all":
+        chains = "*"
+    
+    
+    # Writng the file
+    text = f"HEADER: protein chains\n\n{pdb} {chains}"
+    ds.write_text(text)
+            
+    return ds
+
+def run_prank(yml, ds, outdir):
+    """Run p2rank
+    
+    Execute a p2rank process with the subprocess module
+
+    Args:
+        yml (dict): a dictionary corresponding to the contents of the yaml file
+        ds (pathlib.Path): Path to the dataset file
+        outdir (pathlib.Path): Path to the output directory
+
+    Returns:
+        result (subprocess.CompletedProcess): The completed process
+    """
+    
+    P2RANK = yml["p2rank"]
+    
+    # Execute p2rank
+    command = f"{P2RANK} predict {ds} -o {outdir}"
+    try:
+        result = subprocess.run(command.split(), capture_output=True)
+    except Exception as error:
+        logging.error(f"An error has occured during the p2rank process:\n{error}")
+        sys.exit(1)
+    
+    if result.returncode != 0:
+            logging.error(f"An error has occured during the:\n{result.stderr.decode('utf-8')}")
+            sys.exit(1)
+    
+    return result
+
 ##########
 ## MAIN ##
 ##########
@@ -103,6 +169,16 @@ if __name__ == "__main__":
                         help="number of cpu threads [default: 6]")
     parser.add_argument("-l", "--log", type=str, metavar="",
                         help="log file path, if it's not provied the log are display in the stdout")
+    input_opt = parser.add_argument_group("References options")
+    input_opt.add_argument("-r","--ref", type=str, metavar="",
+                        help="file containing paths to all references")
+    input_opt.add_argument("-p", "--pocket", type=str, metavar="",
+                        help="file indicating for each reference, the chain and"+
+                        " the pocket positions. If no file is provided, P2RANK "+
+                        "is run to detect pockets")
+    input_opt.add_argument("--chain", type=str, metavar="", default="all",
+                           help="Specifies chains for pocket search, separated "+
+                           "by ',' only used if --pocket isn't provided [default: all]")
     
     args = parser.parse_args()
     
@@ -125,5 +201,26 @@ if __name__ == "__main__":
     outdir = Path(args.outdir).absolute()
     if not outdir.exists():
        outdir.mkdir()
-       
+    
+    if args.ref is not None:
+        ref_file = Path(args.ref).absolute()
+        if not ref_file.exists():
+            logging.error(f"{ref_file} doesn't exist")
+            sys.exit(f"{ref_file} doesn't exist")
+            
+            
+        if not args.pocket is None:
+            pocket_file = Path(args.pocket).absolute()
+            if not pocket_file.exists():
+                logging.error(f"{pocket_file} doesn't file")
+                sys.exit(f"{pocket_file} doesn't file")
+        
+        else:            
+            prank_output = Path.joinpath(outdir, "prank_output")
+            if not prank_output.exists():
+                prank_output.mkdir()
+                
+            ds = build_ds(ref_file, prank_output, args.chain)
+            prank_results = run_prank(yml, ds, prank_output)
+            
     logging.info(f"Total Elapsed time: {datetime.datetime.now() -  start}")
