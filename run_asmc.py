@@ -26,11 +26,11 @@ def read_yaml():
     """Read the yaml file
     
     Load the content of the yaml file and check the validity of paths.
-    The configuration should be place in a directory named data in the same
+    The configuration should be place in a directory named ressources in the same
     location as run_asmc.py, e.g :
 
     .
-    ├── data
+    ├── ressources
     │   ├── AA_distances.tsv
     │   └── config.yml
     ├── run_asmc.py
@@ -48,9 +48,9 @@ def read_yaml():
     
     main_path = Path(__file__).absolute()
     parent_path = main_path.parent
-    data_path = Path.joinpath(parent_path, "data")
+    ressources_path = Path.joinpath(parent_path, "ressources")
     
-    config_path = Path.joinpath(data_path, "config_asmc.yml")
+    config_path = Path.joinpath(ressources_path, "config_asmc.yml")
 
     if not Path.is_file(config_path):
         logging.error(f"not found the configuration file: {config_path}")
