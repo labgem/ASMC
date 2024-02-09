@@ -3,6 +3,7 @@ import argparse
 import datetime
 import logging
 import subprocess
+import re
 from itertools import groupby
 from pathlib import Path
 
@@ -558,6 +559,48 @@ def build_multiple_alignment(ref_file, pocket_file, pairwise_dir):
     
     return text
 
+## ------------------------------- Clustering ------------------------------- ##
+
+def read_alignment(file, outdir):
+    """Read sequences alignment in fasta format
+
+    Args:
+        file (pathlib.Path): Path of the fasta file
+        outdir (pathlib.Path): Path to the output directory
+
+    Returns:
+        sequences (dict): Dictionnary with the sequence id as key and the corresponding sequence as value
+    """
+    
+    sequences = {}
+    removed = {}
+    with open(file, "r") as f:
+        seq_id = ""
+        for line in f:
+            if line.startswith(">"):
+                if "tr|" in line or "sp|" in line:
+                    seq_id = re.search("\\w+\\|(\\w+)\\|\\w+", line).group(1)
+                    sequences[seq_id] = ""
+                else:
+                    seq_id = line[1:].split()[0]
+                    sequences[seq_id] = ""
+                    
+            else:
+                n = len(re.findall("-", line))
+                if (n / len(line.strip())) > 0.1:
+                    del sequences[seq_id]
+                    removed[seq_id] = line.strip()
+                else:
+                    sequences[seq_id] += line.strip()
+
+                
+    if len(removed) != 0:
+        text = "\n".join([f"{seq_id}\t{removed[seq_id]}" for seq_id in removed])
+        output = Path.joinpath(outdir, "removed_sequences.txt")
+        output.write_text(text)
+    
+    return sequences
+
 ##########
 ## MAIN ##
 ##########
@@ -695,4 +738,7 @@ if __name__ == "__main__":
     else:
         multiple_alignment = Path(args.active_site)
      
+    logging.info("Reading Multiple Alignment")
+    sequences = read_alignment(multiple_alignment, outdir)
+    
     logging.info(f"Total Elapsed time: {datetime.datetime.now() -  start}")
