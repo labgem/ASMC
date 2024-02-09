@@ -291,7 +291,60 @@ def run_build_ali(ref, seq, pocket, outdir, pid, log):
     
     return ret
 
+def run_modeling(job, outdir, threads, log):
+    """Run modeling.py in parallel with GNU Parallel
 
+    modeling.py is the script used to build model of one target sequence
+
+    Args:
+        job (pathlib.Path): Path of file containing the list of inputs
+        outdir (pathlib.Path): Path to the output directory
+        threads (int): Number of parallel jobs
+
+    Returns:
+        ret (subprocess.CompletedProcess): The completed process
+    """
+    
+    # Absolute path of this file
+    main_path = Path(__file__).absolute()
+    parent_path = main_path.parent
+    # Path of the modeling.py
+    src_path = Path.joinpath(parent_path, 'src', "modeling.py")
+    
+    # Create the models directory which will contains the best model of
+    # each target (if it pass the identity cutoff)
+    model_dir = Path.joinpath(outdir, "models")
+    if not model_dir.exists():
+        model_dir.mkdir()
+    
+    # Run modeling.py in parallel
+    command = f'parallel -j {threads} python3 {src_path} -o {model_dir} -a :::: {job}'
+    
+    try:
+        if log is None:
+            ret = subprocess.run(command.split())
+        else:
+            with open(log, "a") as f_log:
+                ret = subprocess.run(command.split(), stdout=f_log,
+                                        stderr=subprocess.STDOUT)
+    except Exception as error:
+        logging.error(f"An error as occured when launching modeling.py process:\n{error}")
+        sys.exit(1)
+    
+    if ret.returncode == 0:
+        tmp_dir = Path.joinpath(outdir, "tmp")
+        ali_dir = Path.joinpath(outdir, "ali")
+        rm_command = f"rm -r {tmp_dir} {ali_dir}"
+        if log is None:
+            subprocess.run(rm_command.split())
+        else:
+            with open(log, "a") as f_log:
+                subprocess.run(rm_command.split(), stdout=f_log, stderr=subprocess.STDOUT)
+    else:
+        logging.error(f"An error has occured during the modeling.py process:\n"+
+                      f"{ret.stderr.decode('utf-8')}")
+   
+    return ret
 
 ##########
 ## MAIN ##
@@ -404,6 +457,16 @@ if __name__ == "__main__":
                 logging.error(f"An error has occurend during the preparation of the homology modeling")
                 sys.exit(1)
             else:
-                pass
+                start_model = datetime.datetime.now()
+                ret_model = run_modeling(job_file, outdir, args.threads, args.log)
+                logging.info(f"modeling duration: {datetime.datetime.now() - start_model}")
+    
+    if not args.models is None:
+        models_file = Path(args.models).absolute()
+        if not models_file.exists():
+            logging.error(f"argument -m/--models '{models_file}' doesn't exist")
+            sys.exit(1)
+    else:
+        models_file = Path.joinpath(outdir, "models.txt")
      
     logging.info(f"Total Elapsed time: {datetime.datetime.now() -  start}")
