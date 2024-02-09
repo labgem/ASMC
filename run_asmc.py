@@ -346,6 +346,218 @@ def run_modeling(job, outdir, threads, log):
    
     return ret
 
+## ----------------------- Strcutural alignment ----------------------------- ##
+
+def pairwise_alignment(yml, models_file, outdir, threads, log):
+    """Runs USalign in parallel with GNU Parallel
+
+    Args:
+        yml (dict): a dictionary corresponding to the contents of the yaml file
+        models_file (pathlib.Path): Path to the models file
+        outdir (pathlib.Path): Path to the output directory
+        threads (int): Number of parallel jobs
+
+    Returns:
+        pairwise_dir (pathlib.Path): Path to the directory containing all pairwise alignment
+    """
+    
+    USALIGN = yml["usalign"]
+    pairwise_dir = Path.joinpath(outdir, "pairwise")
+    superposition_dir = Path.joinpath(outdir, "superposition")
+    
+    if not pairwise_dir.exists():
+        pairwise_dir.mkdir()
+        
+    if not superposition_dir.exists():
+        superposition_dir.mkdir()
+    
+    pair_file = Path.joinpath(outdir, "pair_list.txt")
+    text = ""
+    
+    # Building the file to run gnu parallel
+    with open(models_file, "r") as f:
+        for line in f:
+            split_line = line.split()
+            try:
+                ref = Path(split_line[1]).stem
+                model = Path(split_line[0]).stem
+            except IndexError:
+                logging.error(f"'{models_file}' seems to not contains 2 paths on each line:\n"+
+                              f"{line.strip()}")
+                sys.exit()
+            except Exception as error:
+                logging.error(f"An error has occured while reading '{models_file}':\n"+
+                              f"{error}")
+                sys.exit()
+                
+            if ref == model:
+                continue
+
+            
+            output = Path.joinpath(pairwise_dir, f"{model}_-{ref}.fasta")
+            super_name = Path.joinpath(superposition_dir, f"{model}")
+            text += f"{split_line[1]} {split_line[0]} -o {super_name} -outfmt 1 > {output}\n"
+    
+    pair_file.write_text(text)
+    # Run the parallel command
+    command = f"parallel -j {threads} ::: {USALIGN} :::: {pair_file}"
+    if log is None:
+        subprocess.run(command.split())
+    else:
+        with open(log, "a") as f_log:
+            subprocess.run(command.split(), stdout=f_log, stderr=subprocess.STDOUT)
+    pair_file.unlink()
+    
+    all_pml = [f for f in superposition_dir.iterdir() if f.match("*.pml")]
+    for pml in all_pml:
+        pml.unlink()
+    
+    return pairwise_dir
+
+def renumber_residue(ref_list):
+    """Renumbering reference structure
+
+    Args:
+        ref_list (list): [pathlib.Path, str(chain), list(positions)]
+
+    Returns:
+        renum (list): Renumbered positions
+    """
+    
+    pdb = ref_list[0]
+    chain = ref_list[1]
+    true_pos = ref_list[2]
+    renum = []
+    i = 0
+    resn = None
+    with open(pdb, "r") as f:
+        for line in f:
+            if line.startswith("ATOM") and line[21:22] == chain and line[17:20] != "HOH":
+                if resn is None:
+                    resn = line[22:26].strip()
+                elif line[22:26].strip() != resn:
+                    resn = line[22:26].strip()
+                    i += 1
+                  
+                if resn in true_pos and i not in renum:
+                    renum.append(i)
+    
+    return renum
+
+def extract_aligned_pos(id_ref, id_model, ref_list, alignment_file, keep_ref):
+    """Get positions aligned with the reference pocket
+
+    Args:
+        id_ref (str): Reference id
+        id_model (str): Model id
+        ref_list (list): [pathlib.Path, str(chain), list(positions)]
+        alignment_file (pathlib.Path): Path of the alignment file
+        keep_ref (bool): Indicate whether we write the reference positions
+
+    Returns:
+        text (str): text to add to output file
+    """
+    
+    renum_pos = ref_list[-1]
+    pos_str = []
+    aln = {id_ref:"", id_model:""}
+    text = "" 
+    
+    with open(alignment_file, "r") as f:
+        ref = False
+        for line in f:
+            if line.startswith(">"):
+                if id_ref in line:
+                    ref = True
+                else:
+                    ref = False
+            else:
+                if line.startswith("#"):
+                    break
+                if ref == True:
+                    aln[id_ref] = line.strip()
+                else:
+                    aln[id_model] = line.strip()
+    
+    if keep_ref == True:
+        text += f">{id_ref}\n"
+        j = 0
+        pocket = ""
+        for i, aa in enumerate(aln[id_ref]):
+            if aa != "-":
+                if j in renum_pos:
+                    pos_str.append(i)
+                    pocket += aa
+                j += 1
+        text += pocket + "\n"
+    else:
+        j = 0
+        pocket = ""
+        for i, aa in enumerate(aln[id_ref]):
+            if aa != "-":
+                if j in renum_pos:
+                    pos_str.append(i)
+                j += 1
+    
+    text += f">{id_model}\n"
+    pocket = "".join([aln[id_model][i] for i in pos_str])
+    text += pocket + "\n"
+    
+    return text
+
+def build_multiple_alignment(ref_file, pocket_file, pairwise_dir):
+    """Build multiple alignment
+
+    Args:
+        ref_file (pathlib.Path): Path to reference file
+        pocket_file (pathlib.Path): Path to pocket file
+        pairwise_dir (pathlib.Path): Path to the directory containing the pairwise alignments
+
+    Returns:
+        taxt (str): Text (multiple alignment) to write in the output
+    """
+
+    ref_pos = {}  # dict to store information like path, pocket chain and positions
+    
+    # Read the reference file and get paths
+    with open(ref_file, "r") as f:
+        for line in f:
+            id_ref = Path(line.strip()).stem
+            ref_pos[id_ref] = [line.strip()]
+            
+    # Reading the pocket file
+    with open(pocket_file, "r") as f:
+        for line in f:
+            split_line = line.strip().split(",")
+            ref_pos[split_line[0]].extend([split_line[1], split_line[2:]])
+    
+    # Renumbering references
+    logging.info("Renumbering references")
+    for key in ref_pos:
+        renum = renumber_residue(ref_pos[key])
+        ref_pos[key].append(renum)
+        
+    # Build multiple alignment
+    all_pairwise = [f for f in pairwise_dir.iterdir()]
+    count_ref = {ref:0 for ref in ref_pos}
+    
+    text = ""
+    logging.info(f"Build multiple alignment")
+    for i, alignment_file in enumerate(all_pairwise):
+        id_model = alignment_file.stem.split("_-")[0]
+        id_ref = alignment_file.stem.split("_-")[1]
+        
+        if count_ref[id_ref] == 0:
+            text += extract_aligned_pos(id_ref, id_model, ref_pos[id_ref],
+                                   alignment_file, keep_ref=True)
+        else:
+            text += extract_aligned_pos(id_ref, id_model, ref_pos[id_ref],
+                                   alignment_file, keep_ref=False)
+        
+        count_ref[id_ref] += 1
+    
+    return text
+
 ##########
 ## MAIN ##
 ##########
@@ -468,5 +680,19 @@ if __name__ == "__main__":
             sys.exit(1)
     else:
         models_file = Path.joinpath(outdir, "models.txt")
+        
+    if args.active_site is None:
+        pair_start = datetime.datetime.now()
+        logging.info(f"Start of Structural Parwise Alignment with US-align")
+        pairwise_dir = pairwise_alignment(yml, models_file, outdir, args.threads, args.log)
+        logging.info(f"SPA elasped time: {datetime.datetime.now() - pair_start}")
+        
+        text = build_multiple_alignment(ref_file, pocket_file, pairwise_dir)
+            
+        multiple_alignment = Path.joinpath(outdir, "all_alignment.fasta")
+        multiple_alignment.write_text(text)
+
+    else:
+        multiple_alignment = Path(args.active_site)
      
     logging.info(f"Total Elapsed time: {datetime.datetime.now() -  start}")
