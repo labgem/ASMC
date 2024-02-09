@@ -13,6 +13,11 @@ from sklearn import preprocessing
 from sklearn.cluster import DBSCAN
 from sklearn.metrics import silhouette_score
 
+import warnings
+with warnings.catch_warnings():
+    warnings.filterwarnings("ignore", category=DeprecationWarning)
+    import weblogo
+
 ###############
 ## Functions ##
 ###############
@@ -711,6 +716,36 @@ def formatting_output(sequences, key_list, labels, sub=False):
     
     return G
 
+## ------------------------------- Weblogo ---------------------------------- ##
+
+def write_fasta(group, fasta):
+    
+    text = ""
+    for elem in group:
+        text += f">{elem[0]}\n{elem[1]}\n"
+    
+    fasta.write_text(text)
+    
+    return 0
+
+def build_logo(lenght, fasta, outdir):
+    
+    with open(fasta, "r") as fin:
+        seqs = weblogo.read_seq_data(fin)
+    
+    data = weblogo.LogoData.from_seqs(seqs)
+    options = weblogo.LogoOptions()
+    options.logo_title = f"G{n}"
+    options.fineprint = str(lenght)
+    options.color_scheme = weblogo.chemistry
+    logo_format = weblogo.LogoFormat(data, options)
+    logo_bytes = weblogo.png_print_formatter(data, logo_format)
+    
+    output = Path.joinpath(outdir, f"G{n}.png")
+    output.write_bytes(logo_bytes)
+    
+    return 0
+
 ##########
 ## MAIN ##
 ##########
@@ -937,4 +972,12 @@ if __name__ == "__main__":
             for elem in G:
                 f.write(f"{elem[0]}\t{elem[1]}\t{elem[2]}\n")
     
+        for n in unique:
+            group_seq = [elem for elem in G if elem[-1] == n]
+            fasta = Path.joinpath(outdir, f"G{n}.fasta")
+            write_fasta(group=group_seq, fasta=fasta)
+            build_logo(len(group_seq), fasta, outdir)
+            
+        outdir = Path(args.outdir).absolute() 
+        
     logging.info(f"Total Elapsed time: {datetime.datetime.now() -  start}")
