@@ -10,6 +10,8 @@ from pathlib import Path
 import yaml
 import numpy as np
 from sklearn import preprocessing
+from sklearn.cluster import DBSCAN
+from sklearn.metrics import silhouette_score
 
 ###############
 ## Functions ##
@@ -688,6 +690,27 @@ def dissimilarity(sequences, scoring_dict, ref_clusters):
 
     return key_list, data
 
+def dbscan_clustering(data, threshold, min_samples, threads):
+    
+    dbscan = DBSCAN(eps=threshold, metric="precomputed", n_jobs=threads,
+                    min_samples=min_samples)
+    
+    labels = dbscan.fit_predict(X=data)
+    
+    return labels
+
+def formatting_output(sequences, key_list, labels, sub=False):
+    
+    if sub == False:
+        G = [(key_list[i], sequences[key_list[i]], n) for i, n in enumerate(labels)]
+        G = sorted(G, key=lambda x: x[2])
+    
+    elif sub == True:
+        G = [(key_list[i], n) for i, n in enumerate(labels)]
+        G = sorted(G, key=lambda x: x[1])
+    
+    return G
+
 ##########
 ## MAIN ##
 ##########
@@ -729,6 +752,13 @@ if __name__ == "__main__":
                             help="percent identity cutoff between target and " +
                             "reference to build a model of the target, only " +
                             "used with -s, --seqs [default: 30.0]")
+    dbscan_opt = parser.add_argument_group("DBSCAN options")
+    dbscan_opt.add_argument("-e", "--eps", type=str, metavar="", default="auto",
+                            help="maximum distance between two samples for them to be considered neighbors [0,1] [default: auto]")
+    dbscan_opt.add_argument("--min-samples", type=str, metavar="", default="auto",
+                            help="The number of samples in a neighborhood for a point to be considered as a core point [default: auto]")
+    dbscan_opt.add_argument("--dbtest", type=int, choices=[0, 1], default=0,
+                            help="0: use the --eps value, 1: test different values")
     
     args = parser.parse_args()
     
@@ -838,5 +868,73 @@ if __name__ == "__main__":
     
     logging.info(f"q1\tmed\tq3\tmean")
     logging.info(f"{perc[0]:.3f}\t{perc[1]:.3f}\t{perc[2]:.3f}\t{data.mean():.3f}")
+    
+    if args.dbtest == 1:
+        eps_list = [0.3, 0.2, 0.1, round(perc[0], 2),
+                    round(perc[0] - (perc[0] * 0.1), 2),
+                    round(perc[0] - (perc[0] * 0.15), 2),
+                    round(perc[0] - (perc[0] * 0.20), 2),
+                    round(perc[0] - (perc[0] * 0.25), 2)]
+            
+    else:
+        if args.eps != "auto":
+            try:
+                eps_list = [float(args.eps)]
+            except:
+                logging.error(f"argument -e, --eps invalid value : {args.eps}")
+                sys.exit(1)
+        else:
+            eps_list = [round(perc[0] - (perc[0] * 0.1), 2)]
+                
+    if args.min_samples == "auto":
+        if len(sequences) <= 1500:
+            min_samples = 5
+        else:
+            min_samples = 25
+    else:
+        try:
+            min_samples = int(args.min_samples)
+        except:
+            logging.error(f"argument --min-samples invalid value : {args.min_samples}")
+            sys.exit(1)
+                
+    str_eps_list = ["q1", "q1-10p", "q1-15p", "q1-20p", "q1-25p"]
+    for i, eps in enumerate(eps_list):
+        if i <= 2:
+            str_eps = str(eps)
+            str_eps.replace(".", "_")
+        else:
+            str_eps = str_eps_list[0]
+            del str_eps_list[0]
+            
+        logging.info(f"eps: {eps}\tmin_samples: {min_samples}")
+        labels = dbscan_clustering(data=data, threshold=eps,
+                                    min_samples=min_samples,
+                                    threads=args.threads)
+            
+        unique, count = np.unique(labels, return_counts=True)
+        logging.info(f"Number of clusters: {len(unique)}")
+        logging.info({a:b for a, b in zip(unique, count)})
+            
+        try:
+            score = silhouette_score(X=data, labels=labels, metric="precomputed")
+            logging.info(f"silhouette score: {score:.3f}")
+        except:
+            logging.info("silhouette score: -")
+                
+        G = formatting_output(sequences, key_list, labels)
+            
+        if len(eps_list) <= 1:
+            dbscan_output = Path.joinpath(outdir, f"groups_{str_eps}_min_{min_samples}.tsv")
+        else:
+            outdir = Path.joinpath(outdir, f"eps_{str_eps}_min_{min_samples}")
+            if not outdir.exists():
+                outdir.mkdir()
+                
+            dbscan_output = Path.joinpath(outdir, f"groups_{str_eps}_min_{min_samples}.tsv")
+                
+        with dbscan_output.open(mode="w") as f:
+            for elem in G:
+                f.write(f"{elem[0]}\t{elem[1]}\t{elem[2]}\n")
     
     logging.info(f"Total Elapsed time: {datetime.datetime.now() -  start}")
