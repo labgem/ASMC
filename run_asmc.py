@@ -181,9 +181,9 @@ def extract_pocket(outdir):
         res_dict (dict): Dict containing as key the chain and as values the positions
     """
     
-    
-    prediction = [f for f in outdir.iterdir() if f.match("*predictions*")][0]
-    if len(prediction) == 0:
+    try:
+        prediction = [f for f in outdir.iterdir() if f.match("*predictions*")][0]
+    except IndexError:
         logging.error(f"No predictions file after running p2rank")
         sys.exit(1)
     
@@ -536,7 +536,10 @@ def extract_aligned_pos(id_ref, id_model, ref_list, alignment_file, keep_ref):
                 j += 1
     
     text += f">{id_model}\n"
-    pocket = "".join([aln[id_model][i] for i in pos_str])
+    try:
+        pocket = "".join([aln[id_model][i] for i in pos_str])
+    except:
+        pocket = ""
     text += pocket + "\n"
     
     return text
@@ -848,7 +851,7 @@ if __name__ == "__main__":
                             help="percent identity cutoff between target and " +
                             "reference to build a model of the target, only " +
                             "used with -s, --seqs [default: 30.0]")
-    dbscan_opt = parser.add_argument_group("DBSCAN options")
+    dbscan_opt = parser.add_argument_group("Clustering options")
     dbscan_opt.add_argument("-e", "--eps", type=str, metavar="", default="auto",
                             help="maximum distance between two samples for them to be considered neighbors [0,1] [default: auto]")
     dbscan_opt.add_argument("--min-samples", type=str, metavar="", default="auto",
@@ -906,6 +909,7 @@ if __name__ == "__main__":
             prank_results = run_prank(yml, ds, prank_output)
             pocket_dict = extract_pocket(prank_output)
             pocket_file = write_pocket_file(ref_file, pocket_dict, outdir, args.chain)
+            sys.exit()
     
     elif args.seqs is not None or args.models is not None:
         logging.error(f"argument -r, --ref is required if -s, --seqs or -m, --models is used")
