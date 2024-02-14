@@ -686,39 +686,51 @@ def read_matrix(matrix):
                     
     return scoring_dict
 
-def pairwise_score(scoring_dict, seqA, seqB):
+def pairwise_score(scoring_dict, seqA, seqB, weighted_pos):
     """Compute the score (distance) between two sequences
 
     Args:
         scoring_dict (dict): Dictionnary of dictionnary for access to each distance between amino acid
         seqA (str): A sequence
         seqB (str): A sequence
+        weigted_pos (list): List containing positions with more weight for score calculation
 
     Returns:
         score (int): The score
     """
     
     score = 0
-    for posA, posB in zip(seqA, seqB):
+    for i, (posA, posB) in enumerate(zip(seqA, seqB)):
         if posA in ["-", "X"] or posB in ["-", "X"]:
-            score += 20    
+            if i+1 in weighted_pos:
+                score += 20 * 5
+            else:
+                score += 20
         else:
             try:
-                score += scoring_dict[posA][posB]
+                if i+1 in weighted_pos:
+                    score += scoring_dict[posA][posB] * 5
+                else:
+                    score += scoring_dict[posA][posB]
             except KeyError:
                 logging.warning("At leats one of these two characters isn't "
                                 f"in the distances matrix: {posA} {posB}, they "
                                 "arge given the same score as '-' and 'X'")
+                
+                if i+1 in weighted_pos:
+                    score += 20 * 5
+                else:
+                    score += 5
     
     return score
 
-def dissimilarity(sequences, scoring_dict, ref_clusters):
+def dissimilarity(sequences, scoring_dict, weighted_pos):
     """Build the dissimilarity/distance matrix
 
     Args:
         sequences (dict): Dictionnary with the sequence id as key and the corresponding sequence as value
         scoring_dict (dict): Dictionnary of dictionnary for access to each distance between amino acid
-        ref_clusters (dict): Dictionnary with as key the representative sequence id and as value all members of the cluster, it can be empty
+        weigted_pos (list): List containing positions with more weight for score calculation
 
     Returns:
         data (np.ndarray): The distance matrix
@@ -726,10 +738,7 @@ def dissimilarity(sequences, scoring_dict, ref_clusters):
     """
     
     data = []
-    if ref_clusters == {}:
-        key_list = list(sequences.keys())
-    else:
-        key_list = list(ref_clusters.keys())
+    key_list = list(sequences.keys())
         
     for i, key1 in enumerate(key_list):
         row = []
@@ -740,7 +749,8 @@ def dissimilarity(sequences, scoring_dict, ref_clusters):
             else:
                 score = pairwise_score(scoring_dict,
                                        sequences[key1],
-                                       sequences[key2])
+                                       sequences[key2],
+                                       weighted_pos)
                 
             row.append(score)
         data.append(row)
@@ -806,7 +816,7 @@ def build_logo(lenght, fasta, outdir, n):
         output.write_bytes(logo_bytes)
         
     except Exception as error:
-        logging.error(f"An erro has occured when creating the logo of G{n}:\n{error}")
+        logging.error(f"An error has occured when creating the logo of G{n}:\n{error}")
     
     return 0
 
@@ -831,7 +841,7 @@ if __name__ == "__main__":
                         " the pocket positions. If no file is provided, P2RANK "+
                         "is run to detect pockets")
     input_opt.add_argument("--chain", type=str, metavar="", default="all",
-                           help="Specifies chains for pocket search, separated "+
+                           help="specifies chains for pocket search, separated "+
                            "by ',' only used if --pocket isn't provided [default: all]")
     targts_opt = parser.add_argument_group("Targets options",
                                         "If --seqs is given, homology modeling"+
@@ -855,9 +865,14 @@ if __name__ == "__main__":
     dbscan_opt.add_argument("-e", "--eps", type=str, metavar="", default="auto",
                             help="maximum distance between two samples for them to be considered neighbors [0,1] [default: auto]")
     dbscan_opt.add_argument("--min-samples", type=str, metavar="", default="auto",
-                            help="The number of samples in a neighborhood for a point to be considered as a core point [default: auto]")
+                            help="the number of samples in a neighborhood for a point to be considered as a core point [default: auto]")
     dbscan_opt.add_argument("--dbtest", type=int, choices=[0, 1], default=0,
                             help="0: use the --eps value, 1: test different values")
+    dbscan_opt.add_argument('-w','--weighted-pos', type=str, metavar="", default=None,
+                            help="pocket position with more weight for clustering"
+                            ", positions are numbered from 1 to the total number"
+                            " of positions. To give several positions, separate"
+                            " them with commas, e.g: 1,6,12")
     
     args = parser.parse_args()
     
@@ -909,7 +924,6 @@ if __name__ == "__main__":
             prank_results = run_prank(yml, ds, prank_output)
             pocket_dict = extract_pocket(prank_output)
             pocket_file = write_pocket_file(ref_file, pocket_dict, outdir, args.chain)
-            sys.exit()
     
     elif args.seqs is not None or args.models is not None:
         logging.error(f"argument -r, --ref is required if -s, --seqs or -m, --models is used")
@@ -966,8 +980,18 @@ if __name__ == "__main__":
     matrix = Path(yml["distances"])
     scoring_dict = read_matrix(matrix)
     
+    if args.weighted_pos is None:
+        weighted_pos = []
+    else:
+        try:
+            weighted_pos = [int(x) for x in args.weighted_pos.split(",")]
+        except ValueError:
+            logging.error(f"-w/--weighted-pos accept only integers separated by ',' e.g: 1,6,12")
+            sys.exit(1)
+        logging.info(f"Weighted positions: {weighted_pos}")
+    
     logging.info("Compute Dissimilarities")
-    key_list, data = dissimilarity(sequences, scoring_dict, {})
+    key_list, data = dissimilarity(sequences, scoring_dict, weighted_pos)
     perc = np.percentile(data, [25, 50, 75])
     
     logging.info(f"q1\tmed\tq3\tmean")
