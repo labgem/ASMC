@@ -385,19 +385,27 @@ def pairwise_alignment(yml, models_file, outdir, threads, log):
     
     # Building the file to run gnu parallel
     with open(models_file, "r") as f:
-        for line in f:
+        for i, line in enumerate(f):
             split_line = line.split()
+            if not Path(split_line[0]).exists:
+                logging.error(f"line {i} in {models_file}: {split_line[0]} "
+                              "dosen't exist")
+                sys.exit(1)
+            elif not Path(split_line[1]).exists():
+                logging.error(f"line {i} in {models_file}: {split_line[1]} "
+                              "dosen't exist")
+                sys.exit(1)
             try:
                 ref = Path(split_line[1]).stem
                 model = Path(split_line[0]).stem
             except IndexError:
                 logging.error(f"'{models_file}' seems to not contains 2 paths on each line:\n"+
                               f"{line.strip()}")
-                sys.exit()
+                sys.exit(1)
             except Exception as error:
                 logging.error(f"An error has occured while reading '{models_file}':\n"+
                               f"{error}")
-                sys.exit()
+                sys.exit(1)
                 
             if ref == model:
                 continue
@@ -411,19 +419,26 @@ def pairwise_alignment(yml, models_file, outdir, threads, log):
     # Run the parallel command
     command = f"parallel -j {threads} ::: {USALIGN} :::: {pair_file}"
     if log is None:
-        subprocess.run(command.split())
+        ret = subprocess.run(command.split())
     else:
         with open(log, "a") as f_log:
-            subprocess.run(command.split(), stdout=f_log, stderr=subprocess.STDOUT)
+            ret = subprocess.run(command.split(), stdout=f_log, stderr=subprocess.STDOUT)
     pair_file.unlink()
     
-    all_pml = [f for f in superposition_dir.iterdir() if f.match("*.pml")]
-    for pml in all_pml:
-        pml.unlink()
+    if ret.returncode == 0:
+        all_pml = [f for f in superposition_dir.iterdir() if f.match("*.pml")]
+        for pml in all_pml:
+            pml.unlink()
     
+    else:
+        logging.error(f"An error has occured during USalign process:\n"+
+                      f"{ret.stderr.decode('utf-8')}")
+        sys.exit(1)
+        
     return pairwise_dir
 
-def renumber_residue(ref_list):
+
+def renumber_residues(ref_list):
     """Renumbering reference structure
 
     Args:
@@ -440,16 +455,28 @@ def renumber_residue(ref_list):
     i = 0
     resn = None
     with open(pdb, "r") as f:
-        for line in f:
-            if line.startswith("ATOM") and line[21:22] == chain and line[17:20] != "HOH":
-                if resn is None:
-                    resn = line[22:26].strip()
-                elif line[22:26].strip() != resn:
-                    resn = line[22:26].strip()
-                    i += 1
-                  
-                if resn in true_pos and i not in renum:
-                    renum.append(i)
+        try:
+            for num, line in enumerate(f):
+                if line.startswith("ATOM") and line[21:22] == chain and line[17:20] != "HOH":
+                    if resn is None:
+                        resn = line[22:26].strip()
+                    elif line[22:26].strip() != resn:
+                        resn = line[22:26].strip()
+                        i += 1
+                    
+                    if resn in true_pos and i not in renum:
+                        renum.append(i)
+        except IndexError:
+            logging.error(f"An error has occured while reading {pdb}, line {num}"
+                          f" seems to be incorrectly formatted\n:{line.strip()}")
+            sys.exit(1)
+    
+    
+    if len(renum) != len(true_pos):
+        logging.error("An error has occured when renumbering the residues of "
+                      "reference. This may be caused by a residue number indicated "
+                      f"in the pocket file not found in the {pdb}")
+        sys.exit(1)
     
     return renum
 
@@ -514,13 +541,16 @@ def extract_aligned_pos(id_ref, id_model, ref_list, alignment_file, keep_ref):
     
     return text
 
-def build_multiple_alignment(ref_file, pocket_file, pairwise_dir):
+def build_multiple_alignment(ref_file, pocket_file, models_file, yml, args, outdir):
     """Build multiple alignment
 
     Args:
         ref_file (pathlib.Path): Path to reference file
         pocket_file (pathlib.Path): Path to pocket file
-        pairwise_dir (pathlib.Path): Path to the directory containing the pairwise alignments
+        models_file (pathlib.Path): Path to the models file
+        yml (dict): a dictionary corresponding to the contents of the yaml file
+        args (argparse.Namespace): the object containing all arguments
+        outdir (pathlib.Path): Path to the output directory
 
     Returns:
         taxt (str): Text (multiple alignment) to write in the output
@@ -543,9 +573,14 @@ def build_multiple_alignment(ref_file, pocket_file, pairwise_dir):
     # Renumbering references
     logging.info("Renumbering references")
     for key in ref_pos:
-        renum = renumber_residue(ref_pos[key])
+        renum = renumber_residues(ref_pos[key])
         ref_pos[key].append(renum)
-        
+    
+    pair_start = datetime.datetime.now()
+    logging.info(f"Start of Structural Parwise Alignment with US-align")
+    pairwise_dir = pairwise_alignment(yml, models_file, outdir, args.threads, args.log)
+    logging.info(f"SPA elasped time: {datetime.datetime.now() - pair_start}")
+    
     # Build multiple alignment
     all_pairwise = [f for f in pairwise_dir.iterdir()]
     count_ref = {ref:0 for ref in ref_pos}
@@ -595,13 +630,16 @@ def read_alignment(file, outdir):
                     
             else:
                 n = len(re.findall("-", line))
-                if (n / len(line.strip())) > 0.1:
-                    del sequences[seq_id]
-                    removed[seq_id] = line.strip()
-                else:
-                    sequences[seq_id] += line.strip()
+                try:
+                    if (n / len(line.strip())) > 0.1:
+                        del sequences[seq_id]
+                        removed[seq_id] = line.strip()
+                    else:
+                        sequences[seq_id] += line.strip()
+                except ZeroDivisionError:
+                    del removed[seq_id]
+                    removed[seq_id] = "empty line"
 
-                
     if len(removed) != 0:
         text = "\n".join([f"{seq_id}\t{removed[seq_id]}" for seq_id in removed])
         output = Path.joinpath(outdir, "removed_sequences.txt")
@@ -619,17 +657,30 @@ def read_matrix(matrix):
         scoring_dict (dict): Dictionnary of dictionnary for access to each distance between amino acid
     """
     
+    if not matrix.exists():
+        logging.error(f"{matrix} dosen't exist")
+        sys.exit(1)
+    
     scoring_dict  = {}
     with open(matrix, "r") as f:
         aa_order = []
         for i, line in enumerate(f):
             if i == 0:
                 aa_order = line.strip().split("\t")
+                if len(aa_order) == 1:
+                    logging.error(f"{matrix} seems to not be a tsv file")
+                    sys.exit(1)
             else:
                 sl = line.strip().split("\t")
-                scoring_dict[sl[0]] = {aa_order[i]:int(sl[1:][i])
-                                       for i in range(len(aa_order))}
-    
+                try:
+                    scoring_dict[sl[0]] = {aa_order[i]:int(sl[1:][i])
+                                        for i in range(len(aa_order))}
+                except:
+                    logging.error("An error has occured while reading the "
+                                  "distances matrix. The matrix may not be "
+                                  "symetrical")
+                    sys.exit(1)
+                    
     return scoring_dict
 
 def pairwise_score(scoring_dict, seqA, seqB):
@@ -649,7 +700,12 @@ def pairwise_score(scoring_dict, seqA, seqB):
         if posA in ["-", "X"] or posB in ["-", "X"]:
             score += 20    
         else:
-            score += scoring_dict[posA][posB]
+            try:
+                score += scoring_dict[posA][posB]
+            except KeyError:
+                logging.warning("At leats one of these two characters isn't "
+                                f"in the distances matrix: {posA} {posB}, they "
+                                "arge given the same score as '-' and 'X'")
     
     return score
 
@@ -684,9 +740,7 @@ def dissimilarity(sequences, scoring_dict, ref_clusters):
                                        sequences[key2])
                 
             row.append(score)
-        
         data.append(row)
-    
     data = np.asarray(data)
     
     data = preprocessing.MinMaxScaler().fit_transform(
@@ -697,22 +751,25 @@ def dissimilarity(sequences, scoring_dict, ref_clusters):
 
 def dbscan_clustering(data, threshold, min_samples, threads):
     
-    dbscan = DBSCAN(eps=threshold, metric="precomputed", n_jobs=threads,
-                    min_samples=min_samples)
-    
-    labels = dbscan.fit_predict(X=data)
+    try:
+        dbscan = DBSCAN(eps=threshold, metric="precomputed", n_jobs=threads,
+                        min_samples=min_samples)
+        
+        labels = dbscan.fit_predict(X=data)
+    except Exception as error:
+        logging.error(f"An error has occured during the clustering:\n{error}")
+        sys.exit(1)
     
     return labels
 
-def formatting_output(sequences, key_list, labels, sub=False):
+def formatting_output(sequences, key_list, labels):
     
-    if sub == False:
+    try:
         G = [(key_list[i], sequences[key_list[i]], n) for i, n in enumerate(labels)]
         G = sorted(G, key=lambda x: x[2])
-    
-    elif sub == True:
-        G = [(key_list[i], n) for i, n in enumerate(labels)]
-        G = sorted(G, key=lambda x: x[1])
+    except Exception as error:
+        logging.error(f"An error has occured durint output formatting:\n{error}")
+        sys.exit(1)
     
     return G
 
@@ -728,21 +785,25 @@ def write_fasta(group, fasta):
     
     return 0
 
-def build_logo(lenght, fasta, outdir):
+def build_logo(lenght, fasta, outdir, n):
     
     with open(fasta, "r") as fin:
         seqs = weblogo.read_seq_data(fin)
     
-    data = weblogo.LogoData.from_seqs(seqs)
-    options = weblogo.LogoOptions()
-    options.logo_title = f"G{n}"
-    options.fineprint = str(lenght)
-    options.color_scheme = weblogo.chemistry
-    logo_format = weblogo.LogoFormat(data, options)
-    logo_bytes = weblogo.png_print_formatter(data, logo_format)
-    
-    output = Path.joinpath(outdir, f"G{n}.png")
-    output.write_bytes(logo_bytes)
+    try:
+        data = weblogo.LogoData.from_seqs(seqs)
+        options = weblogo.LogoOptions()
+        options.logo_title = f"G{n}"
+        options.fineprint = str(lenght)
+        options.color_scheme = weblogo.chemistry
+        logo_format = weblogo.LogoFormat(data, options)
+        logo_bytes = weblogo.png_print_formatter(data, logo_format)
+        
+        output = Path.joinpath(outdir, f"G{n}.png")
+        output.write_bytes(logo_bytes)
+        
+    except Exception as error:
+        logging.error(f"An erro has occured when creating the logo of G{n}:\n{error}")
     
     return 0
 
@@ -818,17 +879,23 @@ if __name__ == "__main__":
        outdir.mkdir()
     
     if args.ref is not None:
+        # check references
         ref_file = Path(args.ref).absolute()
         if not ref_file.exists():
             logging.error(f"{ref_file} doesn't exist")
-            sys.exit(f"{ref_file} doesn't exist")
-            
+            sys.exit(1)
+        
+        ref_list = ref_file.read_text().split()
+        for r in ref_list:
+            if not Path(r).exists():
+                logging.error(f"An error has occured while reading {ref_file}: "
+                              f"{r} doesn't exist")
             
         if not args.pocket is None:
             pocket_file = Path(args.pocket).absolute()
             if not pocket_file.exists():
-                logging.error(f"{pocket_file} doesn't file")
-                sys.exit(f"{pocket_file} doesn't file")
+                logging.error(f"{pocket_file} doesn't exist")
+                sys.exit(1)
         
         else:            
             prank_output = Path.joinpath(outdir, "prank_output")
@@ -854,7 +921,7 @@ if __name__ == "__main__":
             PID = args.id
             if PID < 0:
                 logging.error(f"--id negative value: {PID}")
-                sys.exit(f"--id negative value: {PID}")
+                sys.exit(1)
                 
             ret_build = run_build_ali(ref_file, seq_path, pocket_file, outdir,
                                       PID, args.log)
@@ -873,16 +940,14 @@ if __name__ == "__main__":
         if not models_file.exists():
             logging.error(f"argument -m/--models '{models_file}' doesn't exist")
             sys.exit(1)
+        
     else:
         models_file = Path.joinpath(outdir, "models.txt")
         
     if args.active_site is None:
-        pair_start = datetime.datetime.now()
-        logging.info(f"Start of Structural Parwise Alignment with US-align")
-        pairwise_dir = pairwise_alignment(yml, models_file, outdir, args.threads, args.log)
-        logging.info(f"SPA elasped time: {datetime.datetime.now() - pair_start}")
         
-        text = build_multiple_alignment(ref_file, pocket_file, pairwise_dir)
+        text = build_multiple_alignment(ref_file, pocket_file, models_file,
+                                        yml, args, outdir)
             
         multiple_alignment = Path.joinpath(outdir, "all_alignment.fasta")
         multiple_alignment.write_text(text)
@@ -976,7 +1041,7 @@ if __name__ == "__main__":
             group_seq = [elem for elem in G if elem[-1] == n]
             fasta = Path.joinpath(outdir, f"G{n}.fasta")
             write_fasta(group=group_seq, fasta=fasta)
-            build_logo(len(group_seq), fasta, outdir)
+            build_logo(len(group_seq), fasta, outdir, n)
             
         outdir = Path(args.outdir).absolute() 
         
