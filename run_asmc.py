@@ -798,7 +798,7 @@ def write_fasta(group, fasta):
     
     return 0
 
-def build_logo(lenght, fasta, outdir, n):
+def build_logo(lenght, fasta, outdir, n, prefix):
     
     with open(fasta, "r") as fin:
         seqs = weblogo.read_seq_data(fin)
@@ -806,7 +806,7 @@ def build_logo(lenght, fasta, outdir, n):
     try:
         data = weblogo.LogoData.from_seqs(seqs)
         options = weblogo.LogoOptions()
-        options.logo_title = f"G{n}"
+        options.logo_title = f"{prefix}{n}"
         options.fineprint = str(lenght)
         options.color_scheme = weblogo.chemistry
         logo_format = weblogo.LogoFormat(data, options)
@@ -873,6 +873,9 @@ if __name__ == "__main__":
                             ", positions are numbered from 1 to the total number"
                             " of positions. To give several positions, separate"
                             " them with commas, e.g: 1,6,12")
+    weblogo_opt = parser.add_argument_group("Weblogo options")
+    weblogo_opt.add_argument("--prefix", type=str, metavar="", default="G",
+                             help="prefix for logo title before the cluster [default: G]")
     
     args = parser.parse_args()
     
@@ -1069,7 +1072,7 @@ if __name__ == "__main__":
             group_seq = [elem for elem in G if elem[-1] == n]
             fasta = Path.joinpath(outdir, f"G{n}.fasta")
             write_fasta(group=group_seq, fasta=fasta)
-            build_logo(len(group_seq), fasta, outdir, n)
+            build_logo(len(group_seq), fasta, outdir, n, args.prefix)
             
         outdir = Path(args.outdir).absolute() 
         
