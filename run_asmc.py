@@ -605,6 +605,59 @@ def build_multiple_alignment(ref_file, pocket_file, models_file, yml, args, outd
     
     return text
 
+## ----------------------- Multiple Sequence Alignment ---------------------- ##
+
+def search_active_site_in_msa(msa):
+    
+    ref = {"id":"", "pos":[], "aln":[],"seq":""}
+    aln = ""
+    with open(msa, "r") as f:
+        for i, line in enumerate(f):
+            if i == 0:
+                split_line = line.strip().split(",")
+                ref["id"] = split_line[0]
+                ref["pos"] = [int(x) -1 for x in split_line[1:]]
+            else:
+                aln = Path(line.strip())
+                
+    if not aln.exists():
+        logging.error(f"An error has occured while reading '{msa}':\n'{aln}' doesn't exists")
+        sys.exit(1)
+        
+    all_seq = {}
+    with open(aln, "r") as f:
+        ref_id = ""
+        for line in f:
+            if line.startswith(">"):
+                ref_id = line[1:].split()[0]
+                for c in [".", ":", "|"]:
+                        ref_id = ref_id.replace(c, "_")
+            else:
+                if ref_id == ref["id"]:
+                    ref["seq"] += line.strip()
+                else:
+                    try:
+                        all_seq[ref_id] += line.strip()
+                    except KeyError:
+                        all_seq[ref_id] = line.strip()
+    
+    text = f">{ref['id']}\n"
+    j = 0
+    for i, aa in enumerate(ref["seq"]):
+        if aa != "-":
+            if j in ref["pos"]:
+                ref["aln"].append(i)
+                text += aa
+            j += 1
+    text += '\n'
+    
+    for seq in all_seq:
+        text += f">{seq}\n"
+        text += "".join(all_seq[seq][i] for i in ref["aln"])
+        text += "\n"
+    
+    return text
+
 ## ------------------------------- Clustering ------------------------------- ##
 
 def read_alignment(file, outdir):
@@ -859,6 +912,9 @@ if __name__ == "__main__":
                             help="multi fasta file or directory containing each single fasta file")
     targts_opt_ex.add_argument("-m","--models", type=str, metavar="",
                             help="file containing paths to all models and for each model, his reference")
+    targts_opt_ex.add_argument("-M","--msa", type=str, metavar="",
+                            help="file indicating a reference sequence, active"+
+                            " site positions and the path of an MSA")
     targts_opt_ex.add_argument("-a","--active-site", type=str, metavar="",
                                help="active site alignment in fasta format"+
                                ", can be used to create subgroup")
@@ -975,15 +1031,25 @@ if __name__ == "__main__":
         
     if args.active_site is None:
         
-        text = build_multiple_alignment(ref_file, pocket_file, models_file,
+        if args.msa is None:
+        
+            text = build_multiple_alignment(ref_file, pocket_file, models_file,
                                             yml, args, outdir)
                 
-        multiple_alignment = Path.joinpath(outdir, "all_alignment.fasta")
-        multiple_alignment.write_text(text)
+            multiple_alignment = Path.joinpath(outdir, "active_site_alignment.fasta")
+            multiple_alignment.write_text(text)
+            
+        else:
+            if Path(args.msa).exists():
+                text = search_active_site_in_msa(Path(args.msa), outdir)
+                multiple_alignment = Path.joinpath(outdir, "active_site_alignment.fasta")
+                multiple_alignment.write_text(text)
+            else:
+                logging.error(f"argument -M/--msa '{args.msa}' doesn't exist")
 
     else:
         multiple_alignment = Path(args.active_site)
-     
+    
     logging.info("Reading Multiple Alignment")
     sequences = read_alignment(multiple_alignment, outdir)
     
