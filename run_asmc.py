@@ -798,7 +798,7 @@ def write_fasta(group, fasta):
     
     return 0
 
-def build_logo(lenght, fasta, outdir, n, prefix):
+def build_logo(lenght, fasta, outdir, n, prefix, out_format):
     
     with open(fasta, "r") as fin:
         seqs = weblogo.read_seq_data(fin)
@@ -810,13 +810,17 @@ def build_logo(lenght, fasta, outdir, n, prefix):
         options.fineprint = str(lenght)
         options.color_scheme = weblogo.chemistry
         logo_format = weblogo.LogoFormat(data, options)
-        logo_bytes = weblogo.png_print_formatter(data, logo_format)
+        if out_format == "png":
+            logo_bytes = weblogo.png_print_formatter(data, logo_format)
+            output = Path.joinpath(outdir, f"{prefix}{n}.png")
+        elif out_format == "eps":
+            logo_bytes = weblogo.eps_formatter(data, logo_format)
+            output = Path.joinpath(outdir, f"{prefix}{n}.eps")
         
-        output = Path.joinpath(outdir, f"G{n}.png")
         output.write_bytes(logo_bytes)
         
     except Exception as error:
-        logging.error(f"An error has occured when creating the logo of G{n}:\n{error}")
+        logging.error(f"An error has occured when creating the logo of {prefix}{n}:\n{error}")
     
     return 0
 
@@ -833,12 +837,12 @@ if __name__ == "__main__":
                         help="number of cpu threads [default: 6]")
     parser.add_argument("-l", "--log", type=str, metavar="",
                         help="log file path, if it's not provied the log are display in the stdout")
-    input_opt = parser.add_argument_group("References options")
+    input_opt = parser.add_argument_group("References Structures options")
     input_opt.add_argument("-r","--ref", type=str, metavar="",
                         help="file containing paths to all references")
     input_opt.add_argument("-p", "--pocket", type=str, metavar="",
                         help="file indicating for each reference, the chain and"+
-                        " the pocket positions. If no file is provided, P2RANK "+
+                        " the active site positions. If no file is provided, P2RANK "+
                         "is run to detect pockets")
     input_opt.add_argument("--chain", type=str, metavar="", default="all",
                            help="specifies chains for pocket search, separated "+
@@ -856,7 +860,8 @@ if __name__ == "__main__":
     targts_opt_ex.add_argument("-m","--models", type=str, metavar="",
                             help="file containing paths to all models and for each model, his reference")
     targts_opt_ex.add_argument("-a","--active-site", type=str, metavar="",
-                               help="active site alignment in fasta format")
+                               help="active site alignment in fasta format"+
+                               ", can be used to create subgroup")
     targts_opt.add_argument("--id", type=float, metavar="", default=30.0,
                             help="percent identity cutoff between target and " +
                             "reference to build a model of the target, only " +
@@ -876,6 +881,9 @@ if __name__ == "__main__":
     weblogo_opt = parser.add_argument_group("Weblogo options")
     weblogo_opt.add_argument("--prefix", type=str, metavar="", default="G",
                              help="prefix for logo title before the cluster [default: G]")
+    weblogo_opt.add_argument("--format", type=str, metavar="", default="png",
+                             choices=["eps", "png"],
+                             help="file format for output logos, 'eps' or 'png' [default: 'png']")
     
     args = parser.parse_args()
     
@@ -968,8 +976,8 @@ if __name__ == "__main__":
     if args.active_site is None:
         
         text = build_multiple_alignment(ref_file, pocket_file, models_file,
-                                        yml, args, outdir)
-            
+                                            yml, args, outdir)
+                
         multiple_alignment = Path.joinpath(outdir, "all_alignment.fasta")
         multiple_alignment.write_text(text)
 
@@ -1072,7 +1080,7 @@ if __name__ == "__main__":
             group_seq = [elem for elem in G if elem[-1] == n]
             fasta = Path.joinpath(outdir, f"G{n}.fasta")
             write_fasta(group=group_seq, fasta=fasta)
-            build_logo(len(group_seq), fasta, outdir, n, args.prefix)
+            build_logo(len(group_seq), fasta, outdir, n, args.prefix, args.format)
             
         outdir = Path(args.outdir).absolute() 
         
