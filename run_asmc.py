@@ -243,7 +243,8 @@ def write_pocket_file(ref, res_dict, outdir, query_chain):
     try:
         chain = list(res_dict.keys())[0]
     except:
-        logging.error(f"0 results for p2rank, this may be due to an incorrect --chain value : {query_chain}")
+        logging.error(f"0 results for p2rank, this may be due to an incorrect "
+                      f"--chain value : {query_chain}")
         sys.exit(1)
     
     res_str = ''
@@ -290,11 +291,12 @@ def run_build_ali(ref, seq, pocket, outdir, pid, log):
                 ret = subprocess.run(command.split(), check=True, stdout=f_log,
                                         stderr=subprocess.STDOUT)
     except Exception as error:
-        logging.error(f"An error has occured when lauching the build_ali.py process:\n{error}")
+        logging.error(f"An error has occured when lauching the build_ali.py "
+                      f"process:\n{error}")
         sys.exit(1)
         
     if ret.returncode != 0:
-        logging.error(f"An error has occured during the build_ali.py process:\n"+
+        logging.error(f"An error has occured during the build_ali.py process:\n"
                       f"{ret.stderr.decode('utf-8')}")
         sys.exit(1)
     
@@ -326,7 +328,7 @@ def run_modeling(job, outdir, threads, log):
     if not model_dir.exists():
         model_dir.mkdir()
     
-    # Run modeling.py in parallel
+    # Run modeling.py with gnu parallel
     command = f'parallel -j {threads} python3 {src_path} -o {model_dir} -a :::: {job}'
     
     try:
@@ -337,7 +339,8 @@ def run_modeling(job, outdir, threads, log):
                 ret = subprocess.run(command.split(), stdout=f_log,
                                         stderr=subprocess.STDOUT)
     except Exception as error:
-        logging.error(f"An error as occured when launching modeling.py process:\n{error}")
+        logging.error(f"An error as occured when launching modeling.py "
+                      f"process:\n{error}")
         sys.exit(1)
     
     if ret.returncode == 0:
@@ -348,9 +351,10 @@ def run_modeling(job, outdir, threads, log):
             subprocess.run(rm_command.split())
         else:
             with open(log, "a") as f_log:
-                subprocess.run(rm_command.split(), stdout=f_log, stderr=subprocess.STDOUT)
+                subprocess.run(rm_command.split(), stdout=f_log,
+                               stderr=subprocess.STDOUT)
     else:
-        logging.error(f"An error has occured during the modeling.py process:\n"+
+        logging.error(f"An error has occured during the modeling.py process:\n"
                       f"{ret.stderr.decode('utf-8')}")
    
     return ret
@@ -370,7 +374,9 @@ def pairwise_alignment(yml, models_file, outdir, threads, log):
         pairwise_dir (pathlib.Path): Path to the directory containing all pairwise alignment
     """
     
+    # Name or path of Usalign binaries
     USALIGN = yml["usalign"]
+    # Usalign outout directories
     pairwise_dir = Path.joinpath(outdir, "pairwise")
     superposition_dir = Path.joinpath(outdir, "superposition")
     
@@ -383,7 +389,7 @@ def pairwise_alignment(yml, models_file, outdir, threads, log):
     pair_file = Path.joinpath(outdir, "pair_list.txt")
     text = ""
     
-    # Building the file to run gnu parallel
+    # Building the file to be used with gnu parallel
     with open(models_file, "r") as f:
         for i, line in enumerate(f):
             split_line = line.split()
@@ -399,32 +405,35 @@ def pairwise_alignment(yml, models_file, outdir, threads, log):
                 ref = Path(split_line[1]).stem
                 model = Path(split_line[0]).stem
             except IndexError:
-                logging.error(f"'{models_file}' seems to not contains 2 paths on each line:\n"+
-                              f"{line.strip()}")
+                logging.error(f"'{models_file}' seems to not contains 2 paths" 
+                              f"on each line:\n {line.strip()}")
                 sys.exit(1)
             except Exception as error:
-                logging.error(f"An error has occured while reading '{models_file}':\n"+
-                              f"{error}")
+                logging.error(f"An error has occured while reading"
+                              f"'{models_file}':\n{error}")
                 sys.exit(1)
                 
             if ref == model:
                 continue
 
-            
             output = Path.joinpath(pairwise_dir, f"{model}_-{ref}.fasta")
             super_name = Path.joinpath(superposition_dir, f"{model}")
-            text += f"{split_line[1]} {split_line[0]} -o {super_name} -outfmt 1 > {output}\n"
+            text += f"{split_line[1]} {split_line[0]} -o {super_name} -outfmt 1"
+            text += f"> {output}\n"
     
     pair_file.write_text(text)
+    
     # Run the parallel command
     command = f"parallel -j {threads} ::: {USALIGN} :::: {pair_file}"
     if log is None:
         ret = subprocess.run(command.split())
     else:
         with open(log, "a") as f_log:
-            ret = subprocess.run(command.split(), stdout=f_log, stderr=subprocess.STDOUT)
+            ret = subprocess.run(command.split(), stdout=f_log,
+                                 stderr=subprocess.STDOUT)
     pair_file.unlink()
     
+    # Remove pymol scripts
     if ret.returncode == 0:
         all_pml = [f for f in superposition_dir.iterdir() if f.match("*.pml")]
         for pml in all_pml:
@@ -457,7 +466,8 @@ def renumber_residues(ref_list):
     with open(pdb, "r") as f:
         try:
             for num, line in enumerate(f):
-                if line.startswith("ATOM") and line[21:22] == chain and line[17:20] != "HOH":
+                if line.startswith("ATOM") and line[21:22] == chain and \
+                    line[17:20] != "HOH":
                     if resn is None:
                         resn = line[22:26].strip()
                     elif line[22:26].strip() != resn:
@@ -499,6 +509,7 @@ def extract_aligned_pos(id_ref, id_model, ref_list, alignment_file, keep_ref):
     aln = {id_ref:"", id_model:""}
     text = "" 
     
+    # Read alignment from Usalign
     with open(alignment_file, "r") as f:
         ref = False
         for line in f:
@@ -515,26 +526,32 @@ def extract_aligned_pos(id_ref, id_model, ref_list, alignment_file, keep_ref):
                 else:
                     aln[id_model] = line.strip()
     
+    # If keep_ref is True, we write the active site of the ref
     if keep_ref == True:
         text += f">{id_ref}\n"
+        # j is a counter for amino acids, incremented only when
+        # an amino acid is encoutered
         j = 0
         pocket = ""
         for i, aa in enumerate(aln[id_ref]):
             if aa != "-":
                 if j in renum_pos:
+                    # We store i to be able to extract the aligned position
+                    # in the target aligned sequence
                     pos_str.append(i)
                     pocket += aa
                 j += 1
         text += pocket + "\n"
+        
     else:
         j = 0
-        pocket = ""
         for i, aa in enumerate(aln[id_ref]):
             if aa != "-":
                 if j in renum_pos:
                     pos_str.append(i)
                 j += 1
     
+    # Get the positions aligned with the reference active site
     text += f">{id_model}\n"
     try:
         pocket = "".join([aln[id_model][i] for i in pos_str])
@@ -556,7 +573,7 @@ def build_multiple_alignment(ref_file, pocket_file, models_file, yml, args, outd
         outdir (pathlib.Path): Path to the output directory
 
     Returns:
-        taxt (str): Text (multiple alignment) to write in the output
+        text (str): Text (multiple alignment) to write in the output
     """
 
     ref_pos = {}  # dict to store information like path, pocket chain and positions
@@ -579,6 +596,7 @@ def build_multiple_alignment(ref_file, pocket_file, models_file, yml, args, outd
         renum = renumber_residues(ref_pos[key])
         ref_pos[key].append(renum)
     
+    # Pairwise structural alignment
     pair_start = datetime.datetime.now()
     logging.info(f"Start of Structural Parwise Alignment with US-align")
     pairwise_dir = pairwise_alignment(yml, models_file, outdir, args.threads, args.log)
@@ -622,6 +640,8 @@ def search_active_site_in_msa(msa):
     ref = {}
     aln = ""
     id_file = ""
+    
+    # Read -M/--msa input file
     with open(msa, "r") as f:
         for i, line in enumerate(f):
             split_line = line.strip().split(",")
@@ -643,14 +663,14 @@ def search_active_site_in_msa(msa):
         logging.error(f"An erro has occured while reading '{msa}':\n'{id_file}' doesn't exists")
         sys.exit(1)
     
-    # get the reference for each sequences
+    # Get the reference for each sequences
     map_target_ref = {}
     with open(id_file, "r") as f:
         for line in f:
             split_line = line.strip().split()
             map_target_ref[split_line[0]] = split_line[1]
     
-    # parse the multiple sequences alignment
+    # Parse the multiple sequences alignment
     all_seq = {}
     with open(aln, "r") as f:
         seq_id = ""
@@ -670,7 +690,7 @@ def search_active_site_in_msa(msa):
     
     text = ""
     
-    # for each reference sequence, we extract its active site via the
+    # For each reference sequence, we extract its active site via the
     # positions indicated in the file given to the -M/--msa argument. Then we
     # extract all the characters aligned with these positions in the sequences
     # with this reference
