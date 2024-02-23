@@ -503,7 +503,7 @@ def extract_aligned_pos(id_ref, id_model, ref_list, alignment_file, keep_ref):
         ref = False
         for line in f:
             if line.startswith(">"):
-                if id_ref in line:
+                if f"{id_ref}.pdb" in line:
                     ref = True
                 else:
                     ref = False
@@ -608,53 +608,88 @@ def build_multiple_alignment(ref_file, pocket_file, models_file, yml, args, outd
 ## ----------------------- Multiple Sequence Alignment ---------------------- ##
 
 def search_active_site_in_msa(msa):
+    """Search and extract active site in  MSA
+
+    Args:
+        msa (pathlib.Path): file with references, active site positions for each
+        references, path to tsv file indicating the reference of each sequence
+        and the path of msa
+
+    Returns:
+        str: multiple alignment of active sites to write in a file
+    """
     
-    ref = {"id":"", "pos":[], "aln":[],"seq":""}
+    ref = {}
     aln = ""
+    id_file = ""
     with open(msa, "r") as f:
         for i, line in enumerate(f):
-            if i == 0:
-                split_line = line.strip().split(",")
-                ref["id"] = split_line[0]
-                ref["pos"] = [int(x) -1 for x in split_line[1:]]
+            split_line = line.strip().split(",")
+            if len(split_line) > 1:
+                ref[split_line[0]] = {"pos":[], "aln":[], "seq":""}
+                ref[split_line[0]]["pos"] = [int(x) -1 for x in split_line[1:]]
             else:
-                aln = Path(line.strip())
-                
+                path = Path(line.strip())
+                if path.suffix in [".fasta", ".fa", ".faa"]:
+                    aln = Path(line.strip())
+                else:
+                    id_file = Path(line.strip())
+            
     if not aln.exists():
         logging.error(f"An error has occured while reading '{msa}':\n'{aln}' doesn't exists")
         sys.exit(1)
-        
+    
+    if not id_file.exists():
+        logging.error(f"An erro has occured while reading '{msa}':\n'{id_file}' doesn't exists")
+        sys.exit(1)
+    
+    # get the reference for each sequences
+    map_target_ref = {}
+    with open(id_file, "r") as f:
+        for line in f:
+            split_line = line.strip().split()
+            map_target_ref[split_line[0]] = split_line[1]
+    
+    # parse the multiple sequences alignment
     all_seq = {}
     with open(aln, "r") as f:
-        ref_id = ""
+        seq_id = ""
         for line in f:
             if line.startswith(">"):
-                ref_id = line[1:].split()[0]
+                seq_id = line[1:].split()[0]
                 for c in [".", ":", "|"]:
-                        ref_id = ref_id.replace(c, "_")
+                        seq_id = seq_id.replace(c, "_")
             else:
-                if ref_id == ref["id"]:
-                    ref["seq"] += line.strip()
+                if seq_id in ref:
+                    ref[seq_id]["seq"] += line.strip()
                 else:
                     try:
-                        all_seq[ref_id] += line.strip()
+                        all_seq[seq_id] += line.strip()
                     except KeyError:
-                        all_seq[ref_id] = line.strip()
+                        all_seq[seq_id] = line.strip()
     
-    text = f">{ref['id']}\n"
-    j = 0
-    for i, aa in enumerate(ref["seq"]):
-        if aa != "-":
-            if j in ref["pos"]:
-                ref["aln"].append(i)
-                text += aa
-            j += 1
-    text += '\n'
+    text = ""
     
-    for seq in all_seq:
-        text += f">{seq}\n"
-        text += "".join(all_seq[seq][i] for i in ref["aln"])
-        text += "\n"
+    # for each reference sequence, we extract its active site via the
+    # positions indicated in the file given to the -M/--msa argument. Then we
+    # extract all the characters aligned with these positions in the sequences
+    # with this reference
+    for ref_id in ref:
+        text += f">{ref_id}\n"
+        j = 0
+        for i, aa in enumerate(ref[ref_id]["seq"]):
+            if aa != "-":
+                if j in ref[ref_id]["pos"]:
+                    ref[ref_id]["aln"].append(i)
+                    text += aa
+                j += 1
+        text += '\n'
+
+        ref_seq = [s for s in map_target_ref if map_target_ref[s] == ref_id]
+        for seq in ref_seq:
+            text += f">{seq}\n"
+            text += "".join(all_seq[seq][i] for i in ref[ref_id]["aln"])
+            text += "\n"
     
     return text
 
@@ -913,8 +948,9 @@ if __name__ == "__main__":
     targts_opt_ex.add_argument("-m","--models", type=str, metavar="",
                             help="file containing paths to all models and for each model, his reference")
     targts_opt_ex.add_argument("-M","--msa", type=str, metavar="",
-                            help="file indicating a reference sequence, active"+
-                            " site positions and the path of an MSA")
+                            help="file indicating active"+
+                            " site positions for each references, identity_"+
+                            "target_ref path and the path of an MSA")
     targts_opt_ex.add_argument("-a","--active-site", type=str, metavar="",
                                help="active site alignment in fasta format"+
                                ", can be used to create subgroup")
@@ -1041,7 +1077,7 @@ if __name__ == "__main__":
             
         else:
             if Path(args.msa).exists():
-                text = search_active_site_in_msa(Path(args.msa), outdir)
+                text = search_active_site_in_msa(Path(args.msa))
                 multiple_alignment = Path.joinpath(outdir, "active_site_alignment.fasta")
                 multiple_alignment.write_text(text)
             else:
