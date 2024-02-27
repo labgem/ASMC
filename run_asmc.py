@@ -22,7 +22,7 @@ with warnings.catch_warnings():
 ## Functions ##
 ###############
 
-def read_yaml():
+def read_yaml(args):
     """Read the yaml file
     
     Load the content of the yaml file and check the validity of paths.
@@ -65,7 +65,7 @@ def read_yaml():
             if not Path(yml[key]).exists():
                 logging.error(f"{yml[key]} doesn't exist")
         
-        elif key == "usalign":
+        elif key == "usalign" and (args.msa is None and args.active_site is None):
             command = f"{yml[key]} -h"
             try:
                 ret = subprocess.run(command.split(), capture_output=True)
@@ -89,17 +89,18 @@ def read_yaml():
                 logging.error(f"{ret.stderr.decode('utf-8')}")
                 sys.exit(1)
                 
-        elif key == "java":
+        elif key == "java" and args.ref is not None and args.pocket is None:
             command = f"{yml[key]} --version"
             try:
                 ret = subprocess.run(command.split(), capture_output=True)
             except Exception as error:
                 logging.error(f"An error has occured with java:\n{error}")
+                sys.exit(1)
                 
             if ret.returncode != 0:
                 logging.error(f"{ret.stderr.decode('utf-8')}")
                 sys.exit(1)
-        
+    
     return yml
 
 ## -------------------------- Pocket detection ------------------------------ ##
@@ -419,7 +420,7 @@ def pairwise_alignment(yml, models_file, outdir, threads, log):
             output = Path.joinpath(pairwise_dir, f"{model}_-{ref}.fasta")
             super_name = Path.joinpath(superposition_dir, f"{model}")
             text += f"{split_line[1]} {split_line[0]} -o {super_name} -outfmt 1"
-            text += f"> {output}\n"
+            text += f" > {output}\n"
     
     pair_file.write_text(text)
     
@@ -434,12 +435,13 @@ def pairwise_alignment(yml, models_file, outdir, threads, log):
     pair_file.unlink()
     
     # Remove pymol scripts
-    if ret.returncode == 0:
+    if ret.returncode == 0 or ret.returncode == 101:
         all_pml = [f for f in superposition_dir.iterdir() if f.match("*.pml")]
         for pml in all_pml:
             pml.unlink()
     
     else:
+        logging.error(f"{ret.returncode}")
         logging.error(f"An error has occured during USalign process:\n"+
                       f"{ret.stderr.decode('utf-8')}")
         sys.exit(1)
@@ -1012,7 +1014,7 @@ if __name__ == "__main__":
                     filename=args.log, )
     
     # Read the Config file
-    yml = read_yaml()
+    yml = read_yaml(args)
     
     # Make output directory if doesn't exist 
     outdir = Path(args.outdir).absolute()
@@ -1031,6 +1033,7 @@ if __name__ == "__main__":
             if not Path(r).exists():
                 logging.error(f"An error has occured while reading {ref_file}: "
                               f"{r} doesn't exist")
+                sys.exit(1)
             
         if not args.pocket is None:
             pocket_file = Path(args.pocket).absolute()
