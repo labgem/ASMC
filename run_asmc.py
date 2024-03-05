@@ -122,7 +122,8 @@ def build_ds(ref, outdir, chains):
     try:
         pdb = ref.read_text().split("\n")[0]
         if not Path(pdb).exists():
-            logging.error(f"Path to the 1st reference structure in reference file doesn't exist: {pdb}")
+            logging.error("Path to the 1st reference structure in reference "
+                          f"file doesn't exist: {pdb}")
     except Exception as error:
         logging.error(f"An error has occured while reading {ref}:\n{error}")
         sys.exit(1)
@@ -164,7 +165,8 @@ def run_prank(yml, ds, outdir):
         sys.exit(1)
     
     if result.returncode != 0:
-            logging.error(f"An error has occured during the:\n{result.stderr.decode('utf-8')}")
+            logging.error("An error has occured during the p2rank process:\n"
+                          f"{result.stderr.decode('utf-8')}")
             sys.exit(1)
     
     return result
@@ -214,7 +216,8 @@ def extract_pocket(outdir):
             else:
                 break
     except Exception as error:
-        logging.error(f"An error has occured while reading prediction file from p2rank:\n{error}")
+        logging.error("An error has occured while reading prediction file "
+                      f"from p2rank:\n{error}")
         sys.exit(1)
     
     return res_dict
@@ -442,7 +445,7 @@ def pairwise_alignment(yml, models_file, outdir, threads, log):
     
     else:
         logging.error(f"{ret.returncode}")
-        logging.error(f"An error has occured during USalign process:\n"+
+        logging.error("An error has occured during USalign process:\n"
                       f"{ret.stderr.decode('utf-8')}")
         sys.exit(1)
         
@@ -601,7 +604,8 @@ def build_multiple_alignment(ref_file, pocket_file, models_file, yml, args, outd
     # Pairwise structural alignment
     pair_start = datetime.datetime.now()
     logging.info(f"Start of Structural Parwise Alignment with US-align")
-    pairwise_dir = pairwise_alignment(yml, models_file, outdir, args.threads, args.log)
+    pairwise_dir = pairwise_alignment(yml, models_file, outdir, args.threads,
+                                      args.log)
     logging.info(f"SPA elasped time: {datetime.datetime.now() - pair_start}")
     
     # Build multiple alignment
@@ -658,11 +662,13 @@ def search_active_site_in_msa(msa):
                     id_file = Path(line.strip())
             
     if not aln.exists():
-        logging.error(f"An error has occured while reading '{msa}':\n'{aln}' doesn't exists")
+        logging.error("An error has occured while reading "
+                      f"'{msa}':\n'{aln}' doesn't exists")
         sys.exit(1)
     
     if not id_file.exists():
-        logging.error(f"An erro has occured while reading '{msa}':\n'{id_file}' doesn't exists")
+        logging.error("An erro has occured while reading "
+                      f"'{msa}':\n'{id_file}' doesn't exists")
         sys.exit(1)
     
     # Get the reference for each sequences
@@ -930,7 +936,8 @@ def build_logo(lenght, fasta, outdir, n, prefix, out_format):
         output.write_bytes(logo_bytes)
         
     except Exception as error:
-        logging.error(f"An error has occured when creating the logo of {prefix}{n}:\n{error}")
+        logging.error(f"An error has occured when creating the logo of" 
+                      f" {prefix}{n}:\n{error}")
     
     return 0
 
@@ -946,58 +953,69 @@ if __name__ == "__main__":
     parser.add_argument("-t", "--threads", type=int, metavar="", default=6,
                         help="number of cpu threads [default: 6]")
     parser.add_argument("-l", "--log", type=str, metavar="",
-                        help="log file path, if it's not provied the log are display in the stdout")
+                        help="log file path, if it's not provied the log are"
+                        " display in the stdout")
     input_opt = parser.add_argument_group("References Structures options")
     input_opt.add_argument("-r","--ref", type=str, metavar="",
                         help="file containing paths to all references")
     input_opt.add_argument("-p", "--pocket", type=str, metavar="",
-                        help="file indicating for each reference, the chain and"+
-                        " the active site positions. If no file is provided, P2RANK "+
-                        "is run to detect pockets")
+                        help="file indicating for each reference, the chain and"
+                        " the active site positions. If no file is provided, "
+                        "P2RANK is run to detect pockets")
     input_opt.add_argument("--chain", type=str, metavar="", default="all",
-                           help="specifies chains for pocket search, separated "+
-                           "by ',' only used if --pocket isn't provided [default: all]")
+                           help="specifies chains for pocket search, separated "
+                           "by ',' only used if --pocket isn't provided "
+                           "[default: all]")
     targts_opt = parser.add_argument_group("Targets options",
-                                        "If --seqs is given, homology modeling"+
-                                        " is performed. If --models is given, "+
-                                        "homology modeling is not performed "+
-                                        "and if --actice-site is given just "+
+                                        "If --seqs is given, homology modeling"
+                                        " is performed. If --models is given, "
+                                        "homology modeling is not performed "
+                                        "and if --actice-site is given just "
                                         "the clustering is performed")
     targts_opt_ex = targts_opt.add_mutually_exclusive_group(required=True)
 
     targts_opt_ex.add_argument("-s","--seqs", type=str, metavar="",
-                            help="multi fasta file or directory containing each single fasta file")
+                            help="multi fasta file or directory containing each"
+                            " single fasta file")
     targts_opt_ex.add_argument("-m","--models", type=str, metavar="",
-                            help="file containing paths to all models and for each model, his reference")
+                            help="file containing paths to all models and for "
+                            "each model, his reference")
     targts_opt_ex.add_argument("-M","--msa", type=str, metavar="",
                             help="file indicating active"+
-                            " site positions for each references, identity_"+
+                            " site positions for each references, identity_"
                             "target_ref path and the path of an MSA")
     targts_opt_ex.add_argument("-a","--active-site", type=str, metavar="",
-                               help="active site alignment in fasta format"+
+                               help="active site alignment in fasta format"
                                ", can be used to create subgroup")
     targts_opt.add_argument("--id", type=float, metavar="", default=30.0,
-                            help="percent identity cutoff between target and " +
-                            "reference to build a model of the target, only " +
+                            help="percent identity cutoff between target and " 
+                            "reference to build a model of the target, only " 
                             "used with -s, --seqs [default: 30.0]")
     dbscan_opt = parser.add_argument_group("Clustering options")
     dbscan_opt.add_argument("-e", "--eps", type=str, metavar="", default="auto",
-                            help="maximum distance between two samples for them to be considered neighbors [0,1] [default: auto]")
+                            help="maximum distance between two samples for them"
+                            " to be considered neighbors [0,1] [default: auto]")
     dbscan_opt.add_argument("--min-samples", type=str, metavar="", default="auto",
-                            help="the number of samples in a neighborhood for a point to be considered as a core point [default: auto]")
-    dbscan_opt.add_argument("--dbtest", type=int, choices=[0, 1], default=0,
-                            help="0: use the --eps value, 1: test different values")
-    dbscan_opt.add_argument('-w','--weighted-pos', type=str, metavar="", default=None,
+                            help="the number of samples in a neighborhood for "
+                            "a point to be considered as a core point "
+                            "[default: auto]")
+    dbscan_opt.add_argument("--test", type=int, choices=[0, 1], default=0,
+                            help="0: use the --eps value, 1: test different "
+                            "values")
+    dbscan_opt.add_argument('-w','--weighted-pos', type=str, metavar="",
+                            default=None,
                             help="pocket position with more weight for clustering"
                             ", positions are numbered from 1 to the total number"
                             " of positions. To give several positions, separate"
                             " them with commas, e.g: 1,6,12")
     weblogo_opt = parser.add_argument_group("Weblogo options")
     weblogo_opt.add_argument("--prefix", type=str, metavar="", default="G",
-                             help="prefix for logo title before the cluster [default: G]")
+                             help="prefix for logo title before the cluster"
+                             " [default: G]")
     weblogo_opt.add_argument("--format", type=str, metavar="", default="png",
                              choices=["eps", "png"],
-                             help="file format for output logos, 'eps' or 'png' [default: 'png']")
+                             help="file format for output logos, 'eps' or 'png'"
+                             " [default: 'png']")
     
     args = parser.parse_args()
     
@@ -1049,10 +1067,12 @@ if __name__ == "__main__":
             ds = build_ds(ref_file, prank_output, args.chain)
             prank_results = run_prank(yml, ds, prank_output)
             pocket_dict = extract_pocket(prank_output)
-            pocket_file = write_pocket_file(ref_file, pocket_dict, outdir, args.chain)
+            pocket_file = write_pocket_file(ref_file, pocket_dict, outdir,
+                                            args.chain)
     
     elif args.seqs is not None or args.models is not None:
-        logging.error(f"argument -r, --ref is required if -s, --seqs or -m, --models is used")
+        logging.error(f"argument -r, --ref is required if -s, --seqs or -m, "
+                      "--models is used")
         sys.exit(1)
         
     if not args.seqs is None:
@@ -1072,12 +1092,14 @@ if __name__ == "__main__":
             job_file = Path.joinpath(outdir, "job_file.txt")
 
             if not job_file.exists():
-                logging.error(f"An error has occurend during the preparation of the homology modeling")
+                logging.error(f"An error has occurend during the preparation "
+                              "of the homology modeling")
                 sys.exit(1)
             else:
                 start_model = datetime.datetime.now()
                 ret_model = run_modeling(job_file, outdir, args.threads, args.log)
-                logging.info(f"modeling duration: {datetime.datetime.now() - start_model}")
+                logging.info("modeling duration: "
+                             f"{datetime.datetime.now() - start_model}")
     
     if not args.models is None:
         models_file = Path(args.models).absolute()
@@ -1095,13 +1117,15 @@ if __name__ == "__main__":
             text = build_multiple_alignment(ref_file, pocket_file, models_file,
                                             yml, args, outdir)
                 
-            multiple_alignment = Path.joinpath(outdir, "active_site_alignment.fasta")
+            multiple_alignment = Path.joinpath(outdir,
+                                               "active_site_alignment.fasta")
             multiple_alignment.write_text(text)
             
         else:
             if Path(args.msa).exists():
                 text = search_active_site_in_msa(Path(args.msa))
-                multiple_alignment = Path.joinpath(outdir, "active_site_alignment.fasta")
+                multiple_alignment = Path.joinpath(outdir,
+                                                   "active_site_alignment.fasta")
                 multiple_alignment.write_text(text)
             else:
                 logging.error(f"argument -M/--msa '{args.msa}' doesn't exist")
@@ -1122,7 +1146,8 @@ if __name__ == "__main__":
         try:
             weighted_pos = [int(x) for x in args.weighted_pos.split(",")]
         except ValueError:
-            logging.error(f"-w/--weighted-pos accept only integers separated by ',' e.g: 1,6,12")
+            logging.error(f"-w/--weighted-pos accept only integers separated "
+                          "by ',' e.g: 1,6,12")
             sys.exit(1)
         logging.info(f"Weighted positions: {weighted_pos}")
     
@@ -1133,7 +1158,7 @@ if __name__ == "__main__":
     logging.info(f"q1\tmed\tq3\tmean")
     logging.info(f"{perc[0]:.3f}\t{perc[1]:.3f}\t{perc[2]:.3f}\t{data.mean():.3f}")
     
-    if args.dbtest == 1:
+    if args.test == 1:
         eps_list = [0.3, 0.2, 0.1, round(perc[0], 2),
                     round(perc[0] - (perc[0] * 0.1), 2),
                     round(perc[0] - (perc[0] * 0.15), 2),
@@ -1159,7 +1184,8 @@ if __name__ == "__main__":
         try:
             min_samples = int(args.min_samples)
         except:
-            logging.error(f"argument --min-samples invalid value : {args.min_samples}")
+            logging.error("argument --min-samples invalid value : "
+                          f"{args.min_samples}")
             sys.exit(1)
                 
     str_eps_list = ["q1", "q1-10p", "q1-15p", "q1-20p", "q1-25p"]
@@ -1189,13 +1215,15 @@ if __name__ == "__main__":
         G = formatting_output(sequences, key_list, labels)
             
         if len(eps_list) <= 1:
-            dbscan_output = Path.joinpath(outdir, f"groups_{str_eps}_min_{min_samples}.tsv")
+            dbscan_output = Path.joinpath(outdir,
+                                          f"groups_{str_eps}_min_{min_samples}.tsv")
         else:
             outdir = Path.joinpath(outdir, f"eps_{str_eps}_min_{min_samples}")
             if not outdir.exists():
                 outdir.mkdir()
                 
-            dbscan_output = Path.joinpath(outdir, f"groups_{str_eps}_min_{min_samples}.tsv")
+            dbscan_output = Path.joinpath(outdir,
+                                          f"groups_{str_eps}_min_{min_samples}.tsv")
                 
         with dbscan_output.open(mode="w") as f:
             for elem in G:
@@ -1205,7 +1233,8 @@ if __name__ == "__main__":
             group_seq = [elem for elem in G if elem[-1] == n]
             fasta = Path.joinpath(outdir, f"G{n}.fasta")
             write_fasta(group=group_seq, fasta=fasta)
-            build_logo(len(group_seq), fasta, outdir, n, args.prefix, args.format)
+            build_logo(len(group_seq), fasta, outdir, n, args.prefix,
+                       args.format)
             
         outdir = Path(args.outdir).absolute() 
         
