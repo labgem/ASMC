@@ -82,11 +82,12 @@ def Build_ref_target_ali(fasta, ref, pocket, outdir, PID):
     env.libs.topology.read(file='$(LIB)/top_heav.lib')
     aln = modeller.Alignment(env)
     template = modeller.Model(env)
-    
     for r in ref:
         # case of references are in the set of sequences
         if fasta.stem == Path(r).stem:
             return (1, 0.0, "")
+        elif r == "":
+            continue
         else:
             # use the chain specified in the pocket file
             segment = (f"FIRST:{ref_chain[Path(r).stem]}",
