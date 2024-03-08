@@ -264,13 +264,10 @@ def build_multiple_alignment(pairwise_dir, ref_file, pocket_file):
     """Build multiple alignment
 
     Args:
+        pairwise_dir (pathlib.Path): Path to the directory containing all
+                                     pairwise alignments
         ref_file (pathlib.Path): Path to reference file
         pocket_file (pathlib.Path): Path to pocket file
-        models_file (pathlib.Path): Path to the models file
-        yml (dict): a dictionary corresponding to the contents of the yaml file
-        args (argparse.Namespace): the object containing all arguments
-        outdir (pathlib.Path): Path to the output directory
-
     Returns:
         text (str): Text (multiple alignment) to write in the output
     """
@@ -295,14 +292,6 @@ def build_multiple_alignment(pairwise_dir, ref_file, pocket_file):
         renum = renumber_residues(ref_pos[key])
         ref_pos[key].append(renum)
     
-    # Pairwise structural alignment
-    '''
-    pair_start = datetime.datetime.now()
-    logging.info(f"Start of Structural Parwise Alignment with US-align")
-    pairwise_dir = pairwise_alignment(yml, models_file, outdir, args.threads,
-                                      args.log)
-    logging.info(f"SPA elasped time: {datetime.datetime.now() - pair_start}")
-    '''
     
     # Build multiple alignment
     all_pairwise = [f for f in pairwise_dir.iterdir()]
@@ -575,6 +564,19 @@ def dissimilarity(sequences, scoring_dict, weighted_pos):
     return key_list, data
 
 def dbscan_clustering(data, threshold, min_samples, threads):
+    """Clustering with DBSCAN
+
+    Args:
+        data (np.ndarray): The distance matrix
+        threshold (float): The maximum disatnce between two samples for one to
+                           be considered as in the neighborhood of the other
+        min_samples (int): The number of samples in an neighborhood for a point
+                           to be considered as a core point
+        threads (int): Number of CPU threads
+
+    Returns:
+        labels (np.ndarray): Cluster id for each sequences
+    """
     
     try:
         dbscan = DBSCAN(eps=threshold, metric="precomputed", n_jobs=threads,
@@ -588,6 +590,16 @@ def dbscan_clustering(data, threshold, min_samples, threads):
     return labels
 
 def formatting_output(sequences, key_list, labels):
+    """Format data to write output
+
+    Args:
+        sequences (dict): Dictionnary with the sequence id as key and the corresponding sequence as value
+        key_list (list):  The list of sequences id present in the clustering
+        labels (np.ndarray): Cluster id for each sequences
+
+    Returns:
+        G (list): Sorted data
+    """
     
     try:
         G = [(key_list[i], sequences[key_list[i]], n) for i, n in enumerate(labels)]
@@ -601,6 +613,15 @@ def formatting_output(sequences, key_list, labels):
 ## ------------------------------- Weblogo ---------------------------------- ##
 
 def write_fasta(group, fasta):
+    """Write group fasta
+
+    Args:
+        group (list): List the sequences for each sequence id in the group
+        fasta (pathlib.Path): The path of the output file
+
+    Returns:
+        int: 0 if no error has occured
+    """
     
     text = ""
     for elem in group:
@@ -611,6 +632,17 @@ def write_fasta(group, fasta):
     return 0
 
 def build_logo(lenght, fasta, outdir, n, prefix, out_format):
+    """Build weblogo for a Group
+
+    Args:
+        lenght (int): Number of sequences in the group
+        fasta (pathlib.Path): The path of the fasta file
+        outdir (pathib.Path): Output directory
+        n (int): Cluster id
+        prefix (str): Prefix for the weblogo title
+        out_format (str): eps or png
+
+    """
     
     with open(fasta, "r") as fin:
         seqs = weblogo.read_seq_data(fin)
@@ -635,4 +667,3 @@ def build_logo(lenght, fasta, outdir, n, prefix, out_format):
         logging.error(f"An error has occured when creating the logo of" 
                       f" {prefix}{n}:\n{error}")
     
-    return 0
