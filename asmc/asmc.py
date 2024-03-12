@@ -184,7 +184,8 @@ def renumber_residues(ref_list):
     if len(renum) != len(true_pos):
         logging.error("An error has occured when renumbering the residues of "
                       "reference. This may be caused by a residue number indicated "
-                      f"in the pocket file not found in the {pdb}")
+                      f"in the pocket file not found in the {pdb} or a "
+                      "duplicated number")
         sys.exit(1)
     
     return renum
