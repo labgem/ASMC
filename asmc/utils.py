@@ -286,12 +286,15 @@ def compute_levenshtein(id_dict):
     
     return id_dict
 
-def write_output(id_dict, ref_set):
-    """Write the output file
+def build_active_site_checking_file(id_dict, ref_set):
+    """format text of active site checking
 
     Args:
         id_dict (dict): Dict with sub dict as value and seqID as key
         ref_set (set): Set containing the reference IDs
+
+    Returns:
+        str: The text to write
 
     """
     
@@ -319,6 +322,8 @@ def write_output(id_dict, ref_set):
                 text += "f2\n"
             else:
                 text += "both\n"
+        elif ref is None:
+            text += "None\n"
         elif d1 is None and d2 is None:
             if seq1 is None:
                 text += "f2\n"
@@ -328,11 +333,8 @@ def write_output(id_dict, ref_set):
             text += "f2\n"
         elif d2 is None:
             text += "f1\n"
-        elif ref is None:
-            text += "None\n"
         
-    output = Path(Path.cwd().absolute(), "active_site_checking.tsv")
-    output.write_text(text)
+    return text
     
 def extract_aa(file, pos, aa, group):
     """Extracts sequences with a specific amino acid type at a given position

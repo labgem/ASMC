@@ -32,4 +32,6 @@ id_dict = utils.read_asmc_output({}, file1)
 id_dict = utils.read_asmc_output(id_dict, file2, empty=False)
 id_dict, ref_set = utils.read_identity_target_ref(id_dict, file_id)
 id_dict = utils.compute_levenshtein(id_dict)
-utils.write_output(id_dict, ref_set)
+text = utils.build_active_site_checking_file(id_dict, ref_set)
+output = Path.cwd().absolute() / "active_site_checking.tsv"
+output.write_text(text)
