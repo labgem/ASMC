@@ -370,9 +370,13 @@ def search_active_site_in_msa(msa):
         seq_id = ""
         for line in f:
             if line.startswith(">"):
-                seq_id = line[1:].split()[0]
-                for c in [".", ":", "|"]:
-                        seq_id = seq_id.replace(c, "_")
+                if "tr|" in line or "sp|" in line:
+                    print(line)
+                    seq_id = re.search("\\w+\\|(\\w+)\\|\\w+", line).group(1)
+                else:
+                    seq_id = line[1:].split()[0]
+                    for c in [".", ":", "|"]:
+                            seq_id = seq_id.replace(c, "_")
             else:
                 if seq_id in ref:
                     ref[seq_id]["seq"] += line.strip()
