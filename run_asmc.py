@@ -617,7 +617,8 @@ if __name__ == "__main__":
         for n in unique:
             group_seq = [elem for elem in G if elem[-1] == n]
             fasta = Path.joinpath(outdir, f"G{n}.fasta")
-            asmc.write_fasta(group=group_seq, fasta=fasta)
+            fasta, fasta_text = asmc.build_fasta(group=group_seq, fasta=fasta)
+            fasta.write_text(fasta_text)
             asmc.build_logo(len(group_seq), fasta, outdir, n, args.prefix,
                             args.format)
             

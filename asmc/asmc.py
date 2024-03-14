@@ -110,7 +110,7 @@ def conv(x):
     return x.strip()
 
 def build_pocket_text(ref, res_dict, outdir, query_chain):
-    """Write the pocket file
+    """Build the pocket file
 
     Args:
         ref (patlib.Path): Path to reference file
@@ -616,15 +616,16 @@ def formatting_output(sequences, key_list, labels):
 
 ## ------------------------------- Weblogo ---------------------------------- ##
 
-def write_fasta(group, fasta):
-    """Write group fasta
+def build_fasta(group, fasta):
+    """Build group fasta
 
     Args:
         group (list): List the sequences for each sequence id in the group
         fasta (pathlib.Path): The path of the output file
 
     Returns:
-        int: 0 if no error has occured
+        fasta (pathlib.Path): The path of the output file
+        text (str): The text to write in the output file
     """
     
     text = ""
@@ -633,7 +634,7 @@ def write_fasta(group, fasta):
     
     fasta.write_text(text)
     
-    return 0
+    return fasta, text
 
 def build_logo(lenght, fasta, outdir, n, prefix, out_format):
     """Build weblogo for a Group
