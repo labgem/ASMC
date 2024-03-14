@@ -436,7 +436,8 @@ if __name__ == "__main__":
             if not prank_output.exists():
                 prank_output.mkdir()
                 
-            ds = asmc.build_ds(ref_file, prank_output, args.chain)
+            ds, ds_text = asmc.build_ds(ref_file, prank_output, args.chain)
+            ds.write_text(ds_text)
             prank_results = run_prank(yml, ds, prank_output)
             pocket_dict = asmc.extract_pocket(prank_output)
             pocket_file = asmc.write_pocket_file(ref_file, pocket_dict, outdir,

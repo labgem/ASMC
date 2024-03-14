@@ -28,7 +28,8 @@ def build_ds(ref, outdir, chains):
         chains (str): String indicating which chain to search
 
     Returns:
-        ds (pathlib.Path): Path to the builded dataset file
+        ds (pathlib.Path): Path to the dataset file
+        text (str): Text to write in the dataset file
     """
     
     # Use the 1st reference in the file
@@ -50,9 +51,8 @@ def build_ds(ref, outdir, chains):
     
     # Writng the file
     text = f"HEADER: protein chains\n\n{pdb} {chains}"
-    ds.write_text(text)
             
-    return ds
+    return ds, text
 
 def extract_pocket(outdir):
     """Extract the pocket posistions
