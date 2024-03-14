@@ -109,7 +109,7 @@ def conv(x):
     
     return x.strip()
 
-def write_pocket_file(ref, res_dict, outdir, query_chain):
+def build_pocket_text(ref, res_dict, outdir, query_chain):
     """Write the pocket file
 
     Args:
@@ -119,6 +119,7 @@ def write_pocket_file(ref, res_dict, outdir, query_chain):
 
     Returns:
         output (pathlib.Path): Path of the pocket output file
+        text (str): The text to write in the pocket output file
     """
     
     # Get the path of the pdb file used for p2rank
@@ -140,9 +141,7 @@ def write_pocket_file(ref, res_dict, outdir, query_chain):
     
     text = f"{pdb_id},{chain}{res_str}"
     
-    output.write_text(text)
-    
-    return output
+    return output, text
 
 ## ----------------------- Strcutural alignment ----------------------------- ##
 

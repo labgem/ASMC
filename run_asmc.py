@@ -440,8 +440,11 @@ if __name__ == "__main__":
             ds.write_text(ds_text)
             prank_results = run_prank(yml, ds, prank_output)
             pocket_dict = asmc.extract_pocket(prank_output)
-            pocket_file = asmc.write_pocket_file(ref_file, pocket_dict, outdir,
-                                                 args.chain)
+            pocket_file, pocket_text = asmc.build_pocket_text(ref_file,
+                                                              pocket_dict,
+                                                              outdir,
+                                                              args.chain)
+            pocket_file.write_text(pocket_text)
     
     elif args.seqs is not None or args.models is not None:
         logging.error(f"argument -r, --ref is required if -s, --seqs or -m, "
