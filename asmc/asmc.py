@@ -39,6 +39,7 @@ def build_ds(ref, outdir, chains):
         if not Path(pdb).exists():
             logging.error("Path to the 1st reference structure in reference "
                           f"file doesn't exist: {pdb}")
+            sys.exit(1)
     except Exception as error:
         logging.error(f"An error has occured while reading {ref}:\n{error}")
         sys.exit(1)
