@@ -117,6 +117,7 @@ def build_pocket_text(ref, res_dict, outdir, query_chain):
         ref (patlib.Path): Path to reference file
         res_dict (dict): Dict containing as key the chain and as values the positions
         outdir (pathlib.Path): Path to the output directory
+        query_chain (str): 'all' or value from the command line option
 
     Returns:
         output (pathlib.Path): Path of the pocket output file
@@ -196,7 +197,7 @@ def extract_aligned_pos(id_ref, id_model, ref_list, alignment_file, keep_ref):
     Args:
         id_ref (str): Reference id
         id_model (str): Model id
-        ref_list (list): [pathlib.Path, str(chain), list(positions)]
+        ref_list (list): [pathlib.Path, str(chain), list(positions), list(renum)]
         alignment_file (pathlib.Path): Path of the alignment file
         keep_ref (bool): Indicate whether we write the reference positions
 
