@@ -351,17 +351,18 @@ def search_active_site_in_msa(msa):
                       f"'{msa}':\n'{aln}' doesn't exists")
         sys.exit(1)
     
-    if not id_file.exists():
-        logging.error("An erro has occured while reading "
-                      f"'{msa}':\n'{id_file}' doesn't exists")
-        sys.exit(1)
-    
-    # Get the reference for each sequences
-    map_target_ref = {}
-    with open(id_file, "r") as f:
-        for line in f:
-            split_line = line.strip().split()
-            map_target_ref[split_line[0]] = split_line[1]
+    if id_file != "":
+        if not id_file.exists():
+            logging.error("An erro has occured while reading "
+                        f"'{msa}':\n'{id_file}' doesn't exists")
+            sys.exit(1)
+        elif id_file.exists:
+            # Get the reference for each sequences
+            map_target_ref = {}
+            with open(id_file, "r") as f:
+                for line in f:
+                    split_line = line.strip().split()
+                    map_target_ref[split_line[0]] = split_line[1]
     
     # Parse the multiple sequences alignment
     all_seq = {}
@@ -402,11 +403,17 @@ def search_active_site_in_msa(msa):
                 j += 1
         text += '\n'
 
-        ref_seq = [s for s in map_target_ref if map_target_ref[s] == ref_id]
-        for seq in ref_seq:
-            text += f">{seq}\n"
-            text += "".join(all_seq[seq][i] for i in ref[ref_id]["aln"])
-            text += "\n"
+        if len(ref) > 1:
+            ref_seq = [s for s in map_target_ref if map_target_ref[s] == ref_id]
+            for seq in ref_seq:
+                text += f">{seq}\n"
+                text += "".join(all_seq[seq][i] for i in ref[ref_id]["aln"])
+                text += "\n"
+        else:
+            for seq in all_seq:
+                text += f">{seq}\n"
+                text += "".join(all_seq[seq][i] for i in ref[ref_id]["aln"])
+                text += "\n"
     
     return text
 
