@@ -632,8 +632,6 @@ def build_fasta(group, fasta):
     for elem in group:
         text += f">{elem[0]}\n{elem[1]}\n"
     
-    fasta.write_text(text)
-    
     return fasta, text
 
 def build_logo(lenght, fasta, outdir, n, prefix, out_format):
