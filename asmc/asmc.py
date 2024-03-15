@@ -419,15 +419,16 @@ def search_active_site_in_msa(msa):
 
 ## ------------------------------- Clustering ------------------------------- ##
 
-def read_alignment(file, outdir):
+def read_alignment(file):
     """Read sequences alignment in fasta format
 
     Args:
         file (pathlib.Path): Path of the fasta file
-        outdir (pathlib.Path): Path to the output directory
 
     Returns:
-        sequences (dict): Dictionnary with the sequence id as key and the corresponding sequence as value
+        sequences (dict): Dictionnary with the sequence id as key and
+                          the corresponding sequence as value
+        removed (dict) : Dictionnary containing the removed sequences
     """
     
     sequences = {}
@@ -455,12 +456,7 @@ def read_alignment(file, outdir):
                     del removed[seq_id]
                     removed[seq_id] = "empty line"
 
-    if len(removed) != 0:
-        text = "\n".join([f"{seq_id}\t{removed[seq_id]}" for seq_id in removed])
-        output = Path.joinpath(outdir, "removed_sequences.txt")
-        output.write_text(text)
-    
-    return sequences
+    return sequences, removed
 
 def read_matrix(matrix):
     """Read the distance matrix in tsv format

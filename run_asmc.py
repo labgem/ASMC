@@ -519,7 +519,11 @@ if __name__ == "__main__":
         multiple_alignment = Path(args.active_site)
     
     logging.info("Reading Multiple Alignment")
-    sequences = asmc.read_alignment(multiple_alignment, outdir)
+    sequences, removed = asmc.read_alignment(multiple_alignment)
+    if len(removed) != 0:
+        text = "\n".join([f"{seq_id}\t{removed[seq_id]}" for seq_id in removed])
+        output = Path.joinpath(outdir, "removed_sequences.txt")
+        output.write_text(text)
     
     logging.info("Reading Scoring Matrix")
     matrix = Path(yml["distances"])
