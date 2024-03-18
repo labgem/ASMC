@@ -9,8 +9,11 @@ input_opt.add_argument("-s", "--seqs", type=str, metavar="",
                        help="multi fasta file")
 input_opt.add_argument("-m", "--models", type=str, metavar="",
                        help="file containing all PDB paths")
-parser.add_argument("-r", "--ref", type=str, metavar="",
+ref_opt = parser.add_mutually_exclusive_group(required=True)
+ref_opt.add_argument("-r", "--ref-str", type=str, metavar="",
                     help="file contaning the reference structure paths")
+ref_opt.add_argument("-R", "--ref-seq", type=str, metavar="",
+                     help="file containing the reference sequences id")
 args = parser.parse_args()
 
 if args.seqs is not None:
@@ -27,8 +30,16 @@ elif args.models is not None:
     targets_seq = utils.read_models(args.models)
     
 print("Reading references")
-ref_seq = utils.read_models(args.ref)
-    
+if args.ref_str is not None:
+    ref_seq = utils.read_models(args.ref_str)
+elif args.ref_seq is not None:
+    ref_seq = {}
+    with open(args.ref_seq, "r") as f:
+        for line in f:
+            ref_id = line.strip()
+            ref_seq[ref_id] = targets_seq[ref_id]
+            del targets_seq[ref_id]
+      
 text = ""
     
 print("Global alignment")
