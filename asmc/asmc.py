@@ -525,7 +525,7 @@ def pairwise_score(scoring_dict, seqA, seqB, weighted_pos):
             except KeyError:
                 logging.warning("At leats one of these two characters isn't "
                                 f"in the distances matrix: {posA} {posB}, they "
-                                "arge given the same score as '-' and 'X'")
+                                "are given the same score as '-' and 'X'")
                 
                 if i+1 in weighted_pos:
                     score += 20 * 5
