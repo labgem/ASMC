@@ -530,7 +530,7 @@ def pairwise_score(scoring_dict, seqA, seqB, weighted_pos):
                 if i+1 in weighted_pos:
                     score += 20 * 5
                 else:
-                    score += 5
+                    score += 20
     
     return score
 
