@@ -621,7 +621,7 @@ def formatting_output(sequences, key_list, labels):
 
 ## ------------------------------- Weblogo ---------------------------------- ##
 
-def build_fasta(group, fasta):
+def build_fasta(group):
     """Build group fasta
 
     Args:
@@ -637,7 +637,7 @@ def build_fasta(group, fasta):
     for elem in group:
         text += f">{elem[0]}\n{elem[1]}\n"
     
-    return fasta, text
+    return text
 
 def build_logo(lenght, fasta, outdir, n, prefix, out_format):
     """Build weblogo for a Group
