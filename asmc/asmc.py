@@ -716,7 +716,7 @@ def merge_logo(outdir, n, prefix, out_format):
         
         if i != 0:
             top_left_coord = (top_left_coord[0],
-                           top_left_coord[1] + LOGO_PAD + LOGO_HEIGHT)
+                              top_left_coord[1] + LOGO_PAD + LOGO_HEIGHT)
             
         img.paste(logo, top_left_coord)
     
@@ -724,3 +724,6 @@ def merge_logo(outdir, n, prefix, out_format):
                            f"Groups_logo.{out_format}")
     
     img.save(output)
+    
+    for f in all_file:
+        f.unlink()
