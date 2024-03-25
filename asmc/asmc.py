@@ -698,7 +698,8 @@ def merge_logo(outdir, n, prefix, out_format):
         LOGO_HEIGHT = 175
         im_height = n * LOGO_HEIGHT + ((n-1) * LOGO_PAD) + LOGO_PAD * 2
     else:
-        im_height = n * (92*2) + ((n-1) * LOGO_PAD) + LOGO_PAD * 2
+        LOGO_HEIGHT = 92*2
+        im_height = n * LOGO_HEIGHT + ((n-1) * LOGO_PAD) + LOGO_PAD * 2
     
     img = Image.new(mode='RGB', size=(IM_WIDTH, im_height), color=(255,255,255))
     draw = ImageDraw.Draw(img)
