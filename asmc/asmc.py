@@ -7,6 +7,7 @@ from pathlib import Path
 import numpy as np
 from sklearn import preprocessing
 from sklearn.cluster import DBSCAN
+from PIL import Image, ImageDraw
 
 import warnings
 with warnings.catch_warnings():
@@ -639,7 +640,7 @@ def build_fasta(group):
     
     return text
 
-def build_logo(lenght, fasta, outdir, n, prefix, out_format):
+def build_logo(lenght, fasta, outdir, n, prefix, png):
     """Build weblogo for a Group
 
     Args:
@@ -648,7 +649,7 @@ def build_logo(lenght, fasta, outdir, n, prefix, out_format):
         outdir (pathib.Path): Output directory
         n (int): Cluster id
         prefix (str): Prefix for the weblogo title
-        out_format (str): eps or png
+        png (str): eps or png
 
     """
     
@@ -662,10 +663,10 @@ def build_logo(lenght, fasta, outdir, n, prefix, out_format):
         options.fineprint = str(lenght)
         options.color_scheme = weblogo.chemistry
         logo_format = weblogo.LogoFormat(data, options)
-        if out_format == "png":
+        if png == "png":
             logo_bytes = weblogo.png_print_formatter(data, logo_format)
             output = Path.joinpath(outdir, f"{prefix}{n}.png")
-        elif out_format == "eps":
+        elif png == "eps":
             logo_bytes = weblogo.eps_formatter(data, logo_format)
             output = Path.joinpath(outdir, f"{prefix}{n}.eps")
         
@@ -675,3 +676,44 @@ def build_logo(lenght, fasta, outdir, n, prefix, out_format):
         logging.error(f"An error has occured when creating the logo of" 
                       f" {prefix}{n}:\n{error}")
     
+def merge_png(outdir, n, prefix):
+    
+    LOGO_WIDTH = 450
+    LOGO_HEIGHT = 175
+
+    LOGO_PAD = 10
+
+    IM_WIDTH = 500
+    
+    all_file = [f for f in outdir.iterdir() if f.match(f"{prefix}*.png")]
+    
+    try:
+        name_to_find = outdir / f"{prefix}-1.png"
+        i = all_file.index(name_to_find)
+        del all_file[i]
+        all_file.append(name_to_find)
+    except:
+        pass
+    
+    im_height = n * LOGO_HEIGHT + ((n-1) * LOGO_PAD) + LOGO_PAD * 2
+    
+    img = Image.new(mode='RGB', size=(IM_WIDTH, im_height), color=(255,255,255))
+    draw = ImageDraw.Draw(img)
+    
+    top_left_coord = (LOGO_PAD, LOGO_PAD)
+    
+    for i, f in enumerate(all_file):
+        
+        logo = Image.open(f)
+        logo = logo.resize(size=(LOGO_WIDTH, LOGO_HEIGHT))
+        
+        if i != 0:
+            top_left_coord = (top_left_coord[0],
+                           top_left_coord[1] + LOGO_PAD + LOGO_HEIGHT)
+            
+        img.paste(logo, top_left_coord)
+    
+    output = Path.joinpath(outdir,
+                           f"Groups_logo.png")
+    
+    img.save(output)
