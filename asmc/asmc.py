@@ -676,7 +676,7 @@ def build_logo(lenght, fasta, outdir, n, prefix, out_format):
         logging.error(f"An error has occured when creating the logo of" 
                       f" {prefix}{n}:\n{error}")
     
-def merge_png(outdir, n, prefix, out_format):
+def merge_logo(outdir, n, prefix, out_format):
 
     LOGO_PAD = 10
 
