@@ -625,7 +625,8 @@ if __name__ == "__main__":
             fasta.write_text(fasta_text)
             asmc.build_logo(len(group_seq), fasta, outdir, n, args.prefix,
                             args.format)
-            
+        
+        asmc.merge_png(outdir, len(unique), args.prefix)  
         outdir = Path(args.outdir).absolute() 
         
     logging.info(f"Total Elapsed time: {datetime.datetime.now() -  start}")
