@@ -677,6 +677,14 @@ def build_logo(lenght, fasta, outdir, n, prefix, out_format):
                       f" {prefix}{n}:\n{error}")
     
 def merge_logo(outdir, n, prefix, out_format):
+    """Merge single logo files
+
+    Args:
+        outdir (pathib.Path): Output directory
+        n (int): The number of groups
+        prefix (str): Prefix for the weblogo title 
+        out_format (str): eps or png
+    """
 
     LOGO_PAD = 10
 
