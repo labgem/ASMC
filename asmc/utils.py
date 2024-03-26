@@ -126,11 +126,12 @@ def get_identity(ref_seq, target):
         
         aln = aligner.align(ref_seq[ref], target)
         score = 0
-        for c in str(aln[0]).split()[1]:
-            if c == "|":
-                score += 1
-            
-        perc_id = score/len(str(aln[0]).split()[1]) *100
+        
+        c = aln[0].counts()
+        score = c.identities
+
+        perc_id = score / aln[0].shape[1] * 100
+
         if perc_id > perc_id_max:
             perc_id_max = perc_id
             ref_max = ref
