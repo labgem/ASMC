@@ -327,6 +327,11 @@ if __name__ == "__main__":
     parser.add_argument("-l", "--log", type=str, metavar="",
                         help="log file path, if it's not provied the log are"
                         " display in the stdout")
+    parser.add_argument("--end", type=str, choices=["pocket", "modeling",
+                                                    "alignment", "clustering",
+                                                    "logo"],
+                        default="logo",
+                        help="indicates at which stage to stop")
     input_opt = parser.add_argument_group("References Structures options")
     input_opt.add_argument("-r","--ref", type=str, metavar="",
                         help="file containing paths to all references")
@@ -424,18 +429,21 @@ if __name__ == "__main__":
                 logging.error(f"An error has occured while reading {ref_file}: "
                               f"{r} doesn't exist")
                 sys.exit(1)
-            
+        
+        # Check pocket
         if not args.pocket is None:
             pocket_file = Path(args.pocket).absolute()
             if not pocket_file.exists():
                 logging.error(f"{pocket_file} doesn't exist")
                 sys.exit(1)
         
+        # Run p2rank to detect pocket
         else:            
             prank_output = Path.joinpath(outdir, "prank_output")
             if not prank_output.exists():
                 prank_output.mkdir()
-                
+            
+            start = datetime.datetime.now()  
             ds, ds_text = asmc.build_ds(ref_file, prank_output, args.chain)
             ds.write_text(ds_text)
             prank_results = run_prank(yml, ds, prank_output)
@@ -445,12 +453,19 @@ if __name__ == "__main__":
                                                               outdir,
                                                               args.chain)
             pocket_file.write_text(pocket_text)
+            logging.info("Pocket detection duration: "
+                         f"{datetime.datetime.now() - start}")
+            
+            # Stop after pocket detection
+            if args.end == "pocket":
+                sys.exit(0)
     
     elif args.seqs is not None or args.models is not None:
         logging.error(f"argument -r, --ref is required if -s, --seqs or -m, "
                       "--models is used")
         sys.exit(1)
-        
+    
+    # Check input type : sequence, models, alignment  
     if not args.seqs is None:
         seq_path = Path(args.seqs).absolute()
         if not seq_path.exists():
@@ -462,7 +477,8 @@ if __name__ == "__main__":
             if PID < 0:
                 logging.error(f"--id negative value: {PID}")
                 sys.exit(1)
-                
+            
+            # Modeling step
             ret_build = run_build_ali(ref_file, seq_path, pocket_file, outdir,
                                       PID, args.log)
             job_file = Path.joinpath(outdir, "job_file.txt")
@@ -476,18 +492,26 @@ if __name__ == "__main__":
                 ret_model = run_modeling(job_file, outdir, args.threads, args.log)
                 logging.info("modeling duration: "
                              f"{datetime.datetime.now() - start_model}")
+                
+                # Stop after modeling
+                if args.end == "modeling":
+                    sys.exit(0)
     
+    # check if path exist
     if not args.models is None:
         models_file = Path(args.models).absolute()
         if not models_file.exists():
             logging.error(f"argument -m/--models '{models_file}' doesn't exist")
             sys.exit(1)
-        
+    
+    # Means that modeling step has been run and the models.txt file created
     else:
         models_file = Path.joinpath(outdir, "models.txt")
-        
+    
+    # No active site alignment provide
     if args.active_site is None:
         
+        # No MSA provided => Run Structural Alignment
         if args.msa is None:
             
             pair_start = datetime.datetime.now()
@@ -499,15 +523,18 @@ if __name__ == "__main__":
                                               log=args.log)
             logging.info(f"SPA elasped time: {datetime.datetime.now() - pair_start}")
             
+            logging.info("Start the built of active site multiple alignment")
             text = asmc.build_multiple_alignment(pairwise_dir, ref_file,
                                                  pocket_file)
                 
             multiple_alignment = Path.joinpath(outdir,
                                                "active_site_alignment.fasta")
             multiple_alignment.write_text(text)
-            
+        
+        # A MSA is provided 
         else:
             if Path(args.msa).exists():
+                logging.info("Start the built of active site multiple alignment")
                 text = asmc.search_active_site_in_msa(Path(args.msa))
                 multiple_alignment = Path.joinpath(outdir,
                                                    "active_site_alignment.fasta")
@@ -515,8 +542,14 @@ if __name__ == "__main__":
             else:
                 logging.error(f"argument -M/--msa '{args.msa}' doesn't exist")
 
+    # An active site alignment is provided
     else:
         multiple_alignment = Path(args.active_site)
+    
+    # Stop after alignment
+    if args.end == "alignment":
+        sys.exit(0)
+    
     
     logging.info("Reading Multiple Alignment")
     sequences, removed = asmc.read_alignment(multiple_alignment)
@@ -529,6 +562,7 @@ if __name__ == "__main__":
     matrix = Path(yml["distances"])
     scoring_dict = asmc.read_matrix(matrix)
     
+    # Check if user has provided weighted positions
     if args.weighted_pos is None:
         weighted_pos = []
     else:
@@ -547,28 +581,36 @@ if __name__ == "__main__":
     logging.info(f"q1\tmed\tq3\tmean")
     logging.info(f"{perc[0]:.3f}\t{perc[1]:.3f}\t{perc[2]:.3f}\t{data.mean():.3f}")
     
+    # If test == 1 creates a list contaning a set of eps value to be tested
     if args.test == 1:
         eps_list = [0.3, 0.2, 0.1, round(perc[0], 2),
                     round(perc[0] - (perc[0] * 0.1), 2),
                     round(perc[0] - (perc[0] * 0.15), 2),
                     round(perc[0] - (perc[0] * 0.20), 2),
                     round(perc[0] - (perc[0] * 0.25), 2)]
-            
+    
     else:
+        
+        # Uses the value provided by the user for eps
         if args.eps != "auto":
             try:
                 eps_list = [float(args.eps)]
             except:
                 logging.error(f"argument -e, --eps invalid value : {args.eps}")
                 sys.exit(1)
+                
+        # Selects an eps value based on the normalized distance distribution
         else:
             eps_list = [round(perc[0] - (perc[0] * 0.1), 2)]
-                
+    
+    # Selects a min_sample value based on the number of sequences     
     if args.min_samples == "auto":
         if len(sequences) <= 1500:
             min_samples = 5
         else:
             min_samples = 25
+    
+    # Uses the value provided by the user for min_sample
     else:
         try:
             min_samples = int(args.min_samples)
@@ -576,7 +618,15 @@ if __name__ == "__main__":
             logging.error("argument --min-samples invalid value : "
                           f"{args.min_samples}")
             sys.exit(1)
-                
+    
+    '''
+    if test != 1
+    eps_list contains 1 value, the '.' is replaced by '_'. The str_eps is then
+    used in the output file name.
+    
+    if test == 1 the first 3 values in eps_list are 0.3, 0.2 and 0.1 so, the '.'
+    is replaced by '_'. Next, the value in str_eps_list is used
+    '''          
     str_eps_list = ["q1", "q1-10p", "q1-15p", "q1-20p", "q1-25p"]
     for i, eps in enumerate(eps_list):
         if i <= 2:
@@ -585,22 +635,26 @@ if __name__ == "__main__":
         else:
             str_eps = str_eps_list[0]
             del str_eps_list[0]
-            
+        
+        # DBSCAN Clustering
         logging.info(f"eps: {eps}\tmin_samples: {min_samples}")
         labels = asmc.dbscan_clustering(data=data, threshold=eps,
                                         min_samples=min_samples,
                                         threads=args.threads)
-            
+        
+        # Get the number of groups and the number of sequences per group
         unique, count = np.unique(labels, return_counts=True)
         logging.info(f"Number of clusters: {len(unique)}")
         logging.info({a:b for a, b in zip(unique, count)})
-            
+        
+        # Silhouette score
         try:
             score = silhouette_score(X=data, labels=labels, metric="precomputed")
             logging.info(f"silhouette score: {score:.3f}")
         except:
             logging.info("silhouette score: -")
-                
+        
+        # Formats a list which is then used to write the output file
         G = asmc.formatting_output(sequences, key_list, labels)
             
         if len(eps_list) <= 1:
@@ -618,6 +672,11 @@ if __name__ == "__main__":
             for elem in G:
                 f.write(f"{elem[0]}\t{elem[1]}\t{elem[2]}\n")
     
+        # Don't make logos
+        if args.end == "clustering":
+            continue
+        
+        # Make logo for each group
         for n in unique:
             group_seq = [elem for elem in G if elem[-1] == n]
             fasta = Path.joinpath(outdir, f"G{n}.fasta")
@@ -626,6 +685,7 @@ if __name__ == "__main__":
             asmc.build_logo(len(group_seq), fasta, outdir, n, args.prefix,
                             args.format)
         
+        # Merge logos in a single file
         asmc.merge_logo(outdir, len(unique), args.prefix, args.format)  
         outdir = Path(args.outdir).absolute() 
         
