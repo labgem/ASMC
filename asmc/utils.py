@@ -1,6 +1,7 @@
 import re
 import warnings
 from pathlib import Path
+from typing import Dict, Tuple
 from Bio import Align
 from Bio.Align import substitution_matrices
 
@@ -55,7 +56,7 @@ def get_seq_from_pdb(pdb):
         pdb (pathlib.Path): Pdb file
 
     Returns:
-        str: The sequence
+        sequence (str): The sequence
     """
 
     mapping = {'ALA':'A', 'ARG':'R', 'ASN':'N', 'ASP':'D', 'CYS':'C',
@@ -92,7 +93,7 @@ def read_models(models):
         models (pathlib.Path): The file containing the model paths
 
     Returns:
-        dict: A dictionnary with each pair of id - seq
+        all_seq (dict): A dictionnary with each pair of id - seq
     """
     
     all_seq = {}
@@ -114,7 +115,7 @@ def read_multi_fasta(fasta):
         fasta (pathlib.Path): The multi fasta file
 
     Returns:
-        dict: A dictionnary with each pair of id - seq
+        all_seq (dict): A dictionnary with each pair of id - seq
     """
     
     all_seq = {}
@@ -148,8 +149,8 @@ def get_identity(ref_seq, target):
         target (str): The target sequence
 
     Returns:
-        (str, float): The reference id with the best identity
-                      The percentage identity
+        ref_max (str): The reference id with the best identity
+        perc_id_max (float): The percentage identity
     """
     
     # Set the alignment
@@ -160,13 +161,13 @@ def get_identity(ref_seq, target):
     aligner.extend_gap_score = -0.5
     
     ref_max = ""
-    perc_id_max = 0
+    perc_id_max = 0.0
     
     # For each ref, align with the target sequence
     for ref in ref_seq:
         
         aln = aligner.align(ref_seq[ref], target)
-        score = 0
+        score = 0.0
         
         c = aln[0].counts()
         score = c.identities
@@ -196,7 +197,7 @@ def read_asmc_output(id_dict, file, empty=True):
         update. Otherwise the sub dict is create for the seqID 
 
     Returns:
-        dict: The updated id_dict
+        id_dict (dict): The updated id_dict
     """
     
     with open(file, "r") as f:
@@ -234,8 +235,8 @@ def read_identity_target_ref(id_dict, file):
         file (pathlib.Path): The identity_target_ref.tsv
 
     Returns:
-        (dict, set): The updated id_dict,
-                     Set containing the reference IDs
+        id_dict (dict): The updated id_dict,
+        ref_set (set): Set containing the reference IDs
     """
     
     ref_set = set()
@@ -297,7 +298,7 @@ def compute_levenshtein(id_dict):
         id_dict (dict): Dict with sub dict as value and seqID as key
 
     Returns:
-        dict: The updated id_dict
+        id_dict (dict): The updated id_dict
     """
     
     for key in id_dict:
@@ -336,7 +337,7 @@ def build_active_site_checking_file(id_dict, ref_set):
         ref_set (set): Set containing the reference IDs
 
     Returns:
-        str: The text to write
+        text (str): The text to write
 
     """
     
@@ -388,7 +389,7 @@ def extract_aa(file, pos, aa, group):
         group (int): Group id
 
     Returns:
-        str: The extracted lines
+        result (str): The extracted lines
     """
     
     aa_type = {"F":["F"], "W":["W"], "Y":["Y"], "A":["A"], "V":["V"],
