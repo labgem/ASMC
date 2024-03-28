@@ -3,6 +3,7 @@ import logging
 import re
 from itertools import groupby
 from pathlib import Path
+from typing import Dict, List, Tuple, Union, Any, Optional
 
 import numpy as np
 from sklearn import preprocessing
@@ -20,7 +21,7 @@ with warnings.catch_warnings():
 
 ## -------------------------- Pocket detection ------------------------------ ##
 
-def build_ds(ref, outdir, chains):
+def build_ds(ref: Path, outdir: Path, chains: str) -> Tuple[Path, str]:
     """Build dataset file for p2rank
 
     Args:
@@ -56,7 +57,7 @@ def build_ds(ref, outdir, chains):
             
     return ds, text
 
-def extract_pocket(outdir):
+def extract_pocket(outdir: Path) -> Dict[str, List[int]]:
     """Extract the pocket posistions
     
     Reads the p2rank outputs to extract the positions of the best pocket that
@@ -107,11 +108,12 @@ def extract_pocket(outdir):
     
     return res_dict
 
-def conv(x):
+def conv(x: str) -> str:
     
     return x.strip()
 
-def build_pocket_text(ref, res_dict, outdir, query_chain):
+def build_pocket_text(ref: Path, res_dict: Dict[str, List[int]], outdir: Path,
+                      query_chain: str) -> Tuple[Path, str]:
     """Build the pocket file
 
     Args:
@@ -148,11 +150,11 @@ def build_pocket_text(ref, res_dict, outdir, query_chain):
 
 ## ----------------------- Strcutural alignment ----------------------------- ##
 
-def renumber_residues(ref_list):
+def renumber_residues(ref_list: Tuple[Path, str, List[int]]) -> List[int]:
     """Renumbering reference structure
 
     Args:
-        ref_list (list): [pathlib.Path, str(chain), list(positions)]
+        ref_list (tuple or list): [pathlib.Path, str(chain), list(positions)]
 
     Returns:
         renum (list): Renumbered positions
@@ -192,13 +194,15 @@ def renumber_residues(ref_list):
     
     return renum
 
-def extract_aligned_pos(id_ref, id_model, ref_list, alignment_file, keep_ref):
+def extract_aligned_pos(id_ref: str, id_model: str,
+                        ref_list: Tuple[Path, str, List[int]],
+                        alignment_file: Path, keep_ref: bool) -> str:
     """Get positions aligned with the reference pocket
 
     Args:
         id_ref (str): Reference id
         id_model (str): Model id
-        ref_list (list): [pathlib.Path, str(chain), list(positions), list(renum)]
+        ref_list (tuple or list): [pathlib.Path, str(chain), list(positions), list(renum)]
         alignment_file (pathlib.Path): Path of the alignment file
         keep_ref (bool): Indicate whether we write the reference positions
 
@@ -263,7 +267,8 @@ def extract_aligned_pos(id_ref, id_model, ref_list, alignment_file, keep_ref):
     
     return text
 
-def build_multiple_alignment(pairwise_dir, ref_file, pocket_file):
+def build_multiple_alignment(pairwise_dir: Path, ref_file: Path,
+                             pocket_file: Path) -> str:
     """Build multiple alignment
 
     Args:
@@ -319,7 +324,7 @@ def build_multiple_alignment(pairwise_dir, ref_file, pocket_file):
 
 ## ----------------------- Multiple Sequence Alignment ---------------------- ##
 
-def search_active_site_in_msa(msa):
+def search_active_site_in_msa(msa: Path) -> str:
     """Search and extract active site in  MSA
 
     Args:
@@ -422,7 +427,7 @@ def search_active_site_in_msa(msa):
 
 ## ------------------------------- Clustering ------------------------------- ##
 
-def read_alignment(file):
+def read_alignment(file: Path) -> Tuple[Dict[str, str], Dict[str, str]]:
     """Read sequences alignment in fasta format
 
     Args:
@@ -461,7 +466,7 @@ def read_alignment(file):
 
     return sequences, removed
 
-def read_matrix(matrix):
+def read_matrix(matrix: Path) -> Dict[str, Dict[str, int]]:
     """Read the distance matrix in tsv format
 
     Args:
@@ -497,7 +502,8 @@ def read_matrix(matrix):
                     
     return scoring_dict
 
-def pairwise_score(scoring_dict, seqA, seqB, weighted_pos):
+def pairwise_score(scoring_dict: Dict[str, Dict[str, int]], seqA: str, seqB: str,
+                   weighted_pos: List[int]) -> int:
     """Compute the score (distance) between two sequences
 
     Args:
@@ -535,7 +541,8 @@ def pairwise_score(scoring_dict, seqA, seqB, weighted_pos):
     
     return score
 
-def dissimilarity(sequences, scoring_dict, weighted_pos):
+def dissimilarity(sequences: Dict[str, str], scoring_dict: Dict[str, Dict[str, int]],
+                  weighted_pos: List[int]) -> Tuple[List[str], np.ndarray]:
     """Build the dissimilarity/distance matrix
 
     Args:
@@ -573,7 +580,8 @@ def dissimilarity(sequences, scoring_dict, weighted_pos):
 
     return key_list, data
 
-def dbscan_clustering(data, threshold, min_samples, threads):
+def dbscan_clustering(data: np.ndarray, threshold: float, min_samples: int,
+                      threads: int) -> np.ndarray:
     """Clustering with DBSCAN
 
     Args:
@@ -599,7 +607,8 @@ def dbscan_clustering(data, threshold, min_samples, threads):
     
     return labels
 
-def formatting_output(sequences, key_list, labels):
+def formatting_output(sequences: Dict[str, str], key_list: List[str],
+                      labels: np.ndarray) -> List[Tuple[str, str, int]]:
     """Format data to write output
 
     Args:
@@ -622,12 +631,11 @@ def formatting_output(sequences, key_list, labels):
 
 ## ------------------------------- Weblogo ---------------------------------- ##
 
-def build_fasta(group):
+def build_fasta(group: List[Tuple[str, str, Optional[Any]]]) -> str:
     """Build group fasta
 
     Args:
         group (list): List the sequences for each sequence id in the group
-        fasta (pathlib.Path): The path of the output file
 
     Returns:
         fasta (pathlib.Path): The path of the output file
@@ -640,7 +648,8 @@ def build_fasta(group):
     
     return text
 
-def build_logo(lenght, fasta, outdir, n, prefix, out_format):
+def build_logo(lenght: int, fasta: Path, outdir: Path, n: int, prefix: str,
+               out_format: str) -> None:
     """Build weblogo for a Group
 
     Args:
@@ -676,7 +685,7 @@ def build_logo(lenght, fasta, outdir, n, prefix, out_format):
         logging.error(f"An error has occured when creating the logo of" 
                       f" {prefix}{n}:\n{error}")
     
-def merge_logo(outdir, n, prefix, out_format):
+def merge_logo(outdir: Path, n: int, prefix: str, out_format: str) -> str:
     """Merge single logo files
 
     Args:
