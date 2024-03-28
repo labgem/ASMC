@@ -22,8 +22,18 @@ tsv_file = Path(args.file)
 if not tsv_file.exists():
     print(f"error: argument -f/--file '{tsv_file}' doesn't exists")
     sys.exit(1)
-    
-result = utils.extract_aa(tsv_file, pos=args.position,
-                          aa=args.aa_type, group=args.group)
+
+try:  
+    result = utils.extract_aa(tsv_file, pos=args.position,
+                            aa=args.aa_type, group=args.group)
+except utils.FileFormatError as error:
+    print("error: argument -f/--file\n", error)
+    sys.exit(1)
+except utils.AminoAcidTypeError as error:
+    print("error: argument -a/--aa-type\n", error)
+    sys.exit(1)
+except utils.PositionError as error:
+    print("error: argument -p/--position\n", error)
+    sys.exit(1)
 
 print(result, end="")
