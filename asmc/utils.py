@@ -204,12 +204,13 @@ def read_asmc_output(id_dict, file, empty=True):
         if empty == True:
             for line in f:
                 split_line = line.strip().split()
-                id_dict[split_line[0]] = {"f1":split_line[1], "f2":None, "d":None,
-                                          "ref":{"id":None,
-                                                 "seq":None,
-                                                 "d1":None,
-                                                 "d2":None,
-                                                 "pid":None}}
+                id_dict[split_line[0]] = {"f1":split_line[1], "f2":None,
+                                          "d":None,
+                                          "ref_id":None,
+                                          "ref_seq":None,
+                                          "ref_d1":None,
+                                          "ref_d2":None,
+                                          "ref_pid":None}
                 
         else:
             for line in f:
@@ -217,12 +218,13 @@ def read_asmc_output(id_dict, file, empty=True):
                 try:
                     id_dict[split_line[0]]["f2"] = split_line[1]
                 except KeyError:
-                    id_dict[split_line[0]] = {"f1":None, "f2":split_line[1], "d":None,
-                                              "ref":{"id":None,
-                                                     "seq":None,
-                                                     "d1":None,
-                                                     "d2":None,
-                                                     "pid":None}}
+                    id_dict[split_line[0]] = {"f1":None, "f2":split_line[1],
+                                              "d":None,
+                                              "ref_id":None,
+                                              "ref_seq":None,
+                                              "ref_d1":None,
+                                              "ref_d2":None,
+                                              "ref_pid":None}
     
     return id_dict
 
@@ -246,9 +248,14 @@ def read_identity_target_ref(id_dict, file):
             split_line = line.strip().split()
             try:
                 ref_set.add(split_line[1])
+                '''
                 id_dict[split_line[0]]["ref"]["id"] = split_line[1]
                 id_dict[split_line[0]]["ref"]["pid"] = split_line[2]
                 id_dict[split_line[0]]["ref"]["seq"] = id_dict[split_line[1]]["f1"]
+                '''
+                id_dict[split_line[0]]["ref_id"] = split_line[1]
+                id_dict[split_line[0]]["ref_pid"] = split_line[2]
+                id_dict[split_line[0]]["ref_seq"] = id_dict[split_line[1]]["f1"]
             except KeyError:
                 continue
             
@@ -304,28 +311,34 @@ def compute_levenshtein(id_dict):
     for key in id_dict:
         seq1 = id_dict[key]["f1"]
         seq2 = id_dict[key]["f2"]
-        seq_ref = id_dict[key]["ref"]["seq"]
+        #seq_ref = id_dict[key]["ref"]["seq"]
+        seq_ref = id_dict[key]["ref_seq"]
         
         # SeqID present in f1 and f2 -> Levenshtein distance between their seqs
         if seq1 is not None and seq2 is not None:
             distance = LD_two_rows(seq1, seq2)
+            #id_dict[key]["d"] = distance
             id_dict[key]["d"] = distance
             
             # Levenshtein distance between seq1 - seq_ref and seq2 - seq_ref
             if seq_ref is not None:
                 distance = LD_two_rows(seq_ref, seq1)
-                id_dict[key]["ref"]["d1"] = distance
+                #id_dict[key]["ref"]["d1"] = distance
+                id_dict[key]["ref_d1"] = distance
                 distance = LD_two_rows(seq_ref, seq2)
-                id_dict[key]["ref"]["d2"] = distance
+                #id_dict[key]["ref"]["d2"] = distance
+                id_dict[key]["ref_d2"] = distance
         
         # Levenshtein distance between seq_ref - seq1 or seq2
         elif seq_ref is not None:
             if seq1 is not None:
                 distance = LD_two_rows(seq_ref, seq1)
-                id_dict[key]["ref"]["d1"] = distance
+                #id_dict[key]["ref"]["d1"] = distance
+                id_dict[key]["ref_d1"] = distance
             else:
                 distance = LD_two_rows(seq_ref, seq2)
-                id_dict[key]["ref"]["d2"] = distance
+                #id_dict[key]["ref"]["d2"] = distance
+                id_dict[key]["ref_d2"] = distance
     
     return id_dict
 
@@ -349,10 +362,10 @@ def build_active_site_checking_file(id_dict, ref_set):
         seq1 = id_dict[key]["f1"]
         seq2 = id_dict[key]["f2"]
         d = id_dict[key]["d"]
-        ref = id_dict[key]["ref"]["id"]
-        seq_ref = id_dict[key]["ref"]["seq"]
-        d1 = id_dict[key]["ref"]["d1"]
-        d2 = id_dict[key]["ref"]["d2"]
+        ref = id_dict[key]["ref_id"]
+        seq_ref = id_dict[key]["ref_seq"]
+        d1 = id_dict[key]["ref_d1"]
+        d2 = id_dict[key]["ref_d2"]
         
         # Add dictionnary items
         text += f"{key}\t{seq1}\t{seq2}\t{d}\t{ref}\t{seq_ref}\t{d1}\t{d2}\t"
