@@ -7,6 +7,48 @@ from Bio.Align import substitution_matrices
 
 warnings.filterwarnings('ignore', module='Bio')
 
+
+class FileFormatError(Exception):
+    """Exception raised for file which not contain 2 columns
+
+    Attribute:
+        file (pathlib.Path): file which caused the error
+    """
+    def __init__(self, file: Path) -> None:
+        self.file = file
+        self.message = f"'{file}' does not appear to contain at least 2 columns"
+        super().__init__(self.message)
+
+class PositionError(Exception):
+    """Exception raised for a position not between 1 and the sequence size
+
+    Attributes:
+        pos (int): the position which caused the error
+        limit (int): the sequence size
+    """
+    
+    def __init__(self, pos: int, limit: int) -> None:
+        self.pos = pos
+        self.limit = limit
+        self.message = f"position must be between 1 and {limit}, got '{pos}'"
+        super().__init__(self.message)
+
+class AminoAcidTypeError(Exception):
+    """Execption raised for Amino Acid does not correspond to a 1-letter code or
+    a valid amino acid type
+    
+    valid amino acid type : 'aromatic', 'acidic', 'basic', 'polar', 'hydrophobic'
+
+    Attribute:
+        aa (str): the amino acid string wich caused the error
+    """
+    
+    def __init__(self, aa: str) -> None:
+        self.aa = aa
+        self.message = "expected 1-letter amino acid or an amino acid type"
+        self.message += f" , got '{aa}'"
+        super().__init__(self.message)
+
 def get_seq_from_pdb(pdb):
     """Get sequence from pdb file
 
@@ -361,9 +403,7 @@ def extract_aa(file, pos, aa, group):
     try:
         aa_list = aa_type[aa]
     except KeyError:
-        print(f"error: argument -a/--aa-type isn't a 1-letter amino acid or a "
-              "valid amino acid")
-        sys.exit(1)
+        raise AminoAcidTypeError(aa)
     
     result = ""
     
@@ -374,18 +414,14 @@ def extract_aa(file, pos, aa, group):
                 try:
                     sequence = line.split("\t")[1]
                 except IndexError:
-                    print(f"error: argument -f/--file '{file}' seems to not be "
-                          "a tsv file or does not contain at least 2 columns")
-                    sys.exit(1)
+                    raise FileFormatError(file)
                 
                 try:
                     if sequence[pos-1] in aa_list:
                         result += line
                 except IndexError:
-                    print(f"error: argument -p/--position '{pos}' must be "
-                          f"between 1 and {len(sequence)}")
-                    sys.exit(1)
-        
+                    raise PositionError(pos, len(sequence))                 
+                    
         # Specified group
         else:
             for line in f:
@@ -393,17 +429,13 @@ def extract_aa(file, pos, aa, group):
                     sequence = line.split()[1]
                     group_line = line.split()[2]
                 except IndexError:
-                    print(f"error: argument -f/--file '{file}' seems to not be "
-                          "a tsv file or does not contain at least 2 columns")
-                    sys.exit(1)
+                    raise FileFormatError(file)
                     
                 if str(group) == group_line:
                     try:
                         if sequence[pos-1] in aa_list:
                             result += line
                     except IndexError:
-                        print(f"error: argument -p/--position '{pos}' must be "
-                              f"between 1 and {len(sequence)}")
-                        sys.exit(1)
+                        raise PositionError(pos, len(sequence))
                         
     return result
