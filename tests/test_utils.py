@@ -119,11 +119,11 @@ class TestCompareActiveSite:
         assert d["idA"]["f1"] == "AZERTY"
         assert d["idA"]["f2"] is None
         assert d["idA"]["d"] is None
-        assert d["idA"]["ref"]["id"] is None
-        assert d["idA"]["ref"]["seq"] is None
-        assert d["idA"]["ref"]["d1"] is None
-        assert d["idA"]["ref"]["d2"] is None
-        assert d["idA"]["ref"]["pid"] is None
+        assert d["idA"]["ref_id"] is None
+        assert d["idA"]["ref_seq"] is None
+        assert d["idA"]["ref_d1"] is None
+        assert d["idA"]["ref_d2"] is None
+        assert d["idA"]["ref_pid"] is None
     
         f2 = groups_tsv[1]
         d = utils.read_asmc_output(d, f2, empty=False)
@@ -156,11 +156,11 @@ class TestCompareActiveSite:
         d, s = utils.read_identity_target_ref(d, identity_data)
         
         assert s == {"idA", "idE"}
-        assert d["idB"]["ref"]["id"] == "idA"
-        assert d["idB"]["ref"]["pid"] == '50.0'
-        assert d["idC"]["ref"]["id"] == "idE"
-        assert d["idC"]["ref"]["pid"] == '28.7'
-        assert d["idF"]["ref"]["id"] is None
+        assert d["idB"]["ref_id"] == "idA"
+        assert d["idB"]["ref_pid"] == '50.0'
+        assert d["idC"]["ref_id"] == "idE"
+        assert d["idC"]["ref_pid"] == '28.7'
+        assert d["idF"]["ref_id"] is None
     
     def test_LD_two_rows(self):
     
@@ -179,8 +179,8 @@ class TestCompareActiveSite:
         
         assert d["idA"]["d"] == 0
         assert d["idC"]["d"] == 2
-        assert d["idD"]["ref"]["d1"] == 2
-        assert d["idD"]["ref"]["d2"] is None
+        assert d["idD"]["ref_d1"] == 2
+        assert d["idD"]["ref_d2"] is None
     
     def test_build_active_site_checking_file(self, groups_tsv, identity_data):
         
