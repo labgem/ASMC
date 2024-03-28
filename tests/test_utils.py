@@ -205,9 +205,10 @@ class TestCompareActiveSite:
 class TestExtractAA:
     
     @pytest.fixture
-    def data_for_extract_aa(self, tmp_path):
+    def data_for_extract_aa(self, tmp_path_factory):
         
-        f = tmp_path / "extract_aa.tsv"
+        d = tmp_path_factory.mktemp("data")
+        f = d / "extract_aa.tsv"
         
         data = "\n".join(["A\tASW\t1",
                           "B\tFTP\t1",
@@ -219,34 +220,53 @@ class TestExtractAA:
         
         f.write_text(data)
         
-        yield f
+        bad_f = d / "bad.tsv"
+        bad_f.write_text("A\nB\nC")
+        
+        yield d
         
     def test_extract_aa(self, data_for_extract_aa):
         
-        result = utils.extract_aa(data_for_extract_aa, 1, "A", None)
+        correct_file = data_for_extract_aa / "extract_aa.tsv"
+        bad_file = data_for_extract_aa / "bad.tsv"
+        
+        result = utils.extract_aa(correct_file, 1, "A", None)
         assert result == "A\tASW\t1\n"
         
-        result = utils.extract_aa(data_for_extract_aa, 1, "F", None)
+        result = utils.extract_aa(correct_file, 1, "F", None)
         assert result == "B\tFTP\t1\n"
         
-        result = utils.extract_aa(data_for_extract_aa, 1, "K", None)
+        result = utils.extract_aa(correct_file, 1, "K", None)
         assert result == "C\tKEL\t2\n"
         
-        result = utils.extract_aa(data_for_extract_aa, 3, "N", None)
+        result = utils.extract_aa(correct_file, 3, "N", None)
         assert result == "F\tIDN\t4\n"
         
-        result = utils.extract_aa(data_for_extract_aa, 3, "aromatic", None)
+        result = utils.extract_aa(correct_file, 3, "aromatic", None)
         assert result == "A\tASW\t1\n"
         
-        result = utils.extract_aa(data_for_extract_aa, 2, "acidic", None)
+        result = utils.extract_aa(correct_file, 2, "acidic", None)
         assert result == "C\tKEL\t2\nF\tIDN\t4\n"
         
-        result = utils.extract_aa(data_for_extract_aa, 3, "basic", None)
+        result = utils.extract_aa(correct_file, 3, "basic", None)
         assert result == "D\tRGH\t2\nE\tCYK\t3\n"
         
-        result = utils.extract_aa(data_for_extract_aa, 2, "hydrophobic", None)
+        result = utils.extract_aa(correct_file, 2, "hydrophobic", None)
         assert result == "D\tRGH\t2\n"
         
-        result = utils.extract_aa(data_for_extract_aa, 1, "polar", None)
+        result = utils.extract_aa(correct_file, 1, "polar", None)
         assert result == "E\tCYK\t3\n"
         
+        file_format_error = f"'{bad_file}' does not appear to contain at least "
+        file_format_error += "2 columns"
+        with pytest.raises(utils.FileFormatError, match=file_format_error):
+            result = utils.extract_aa(bad_file, 1, "K", None)
+            
+        position_error = "position must be between 1 and 3, got '5'"
+        with pytest.raises(utils.PositionError, match=position_error):
+            result = utils.extract_aa(correct_file, 5, "G", None)
+            
+        amino_acid_type_error = "expected 1-letter amino acid or an amino acid "
+        amino_acid_type_error += "type, got 'Z'"
+        with pytest.raises(utils.AminoAcidTypeError, match=amino_acid_type_error):
+            result = utils.extract_aa(correct_file, 1, 'Z', None)

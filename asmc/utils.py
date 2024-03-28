@@ -45,7 +45,7 @@ class AminoAcidTypeError(Exception):
     def __init__(self, aa: str) -> None:
         self.aa = aa
         self.message = "expected 1-letter amino acid or an amino acid type"
-        self.message += f" , got '{aa}'"
+        self.message += f", got '{aa}'"
         super().__init__(self.message)
 
 def get_seq_from_pdb(pdb):
