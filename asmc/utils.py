@@ -1,7 +1,7 @@
 import re
 import warnings
 from pathlib import Path
-from typing import Dict, Tuple
+from typing import Dict, Tuple, Set, Union, Optional
 from Bio import Align
 from Bio.Align import substitution_matrices
 
@@ -49,7 +49,7 @@ class AminoAcidTypeError(Exception):
         self.message += f", got '{aa}'"
         super().__init__(self.message)
 
-def get_seq_from_pdb(pdb):
+def get_seq_from_pdb(pdb: Path) -> str:
     """Get sequence from pdb file
 
     Args:
@@ -83,7 +83,7 @@ def get_seq_from_pdb(pdb):
     
     return seq
 
-def read_models(models):
+def read_models(models: Path) -> Dict[str, str]:
     """Reads the model file
 
     For each model, add its id as key in a dictionnary and add as value the
@@ -106,7 +106,7 @@ def read_models(models):
     
     return all_seq
 
-def read_multi_fasta(fasta):
+def read_multi_fasta(fasta: Path) -> Dict[str, str]:
     """Reads a multi fasta file
     
     Add in a dictionnary all pair id - sequence.
@@ -137,7 +137,7 @@ def read_multi_fasta(fasta):
 
     return all_seq
 
-def get_identity(ref_seq, target):
+def get_identity(ref_seq: Dict[str, str], target: str) -> Tuple[str, float]:
     """Get the % identity between two sequences
     
     For each pair reference - target, build a global alignment and calculates
@@ -180,7 +180,9 @@ def get_identity(ref_seq, target):
     
     return ref_max, perc_id_max
 
-def read_asmc_output(id_dict, file, empty=True):
+def read_asmc_output(id_dict: Optional[Dict[str, Union[str, int, None]]],
+                     file: Path,
+                     empty=True) -> Dict[str, Union[str, int, None]]:
     """Read the ASMC groups.tsv
 
     Args:
@@ -188,13 +190,6 @@ def read_asmc_output(id_dict, file, empty=True):
                         seqID (key)
         file (pathlib.Path): The ASMC groups.tsv 
         empty (bool, optional): Defaults to True.
-        
-        For the first file (f1) empty is True so a sub dictionnary is crate and
-        associate to the seqID as key. The sequence is add at the 'f1' key in
-        the sub dict.
-        For the 2nd file (f2) empty is set to False in the main, so if the
-        seqID is already in id_dict, the value of 'f2' key in the sub dict is
-        update. Otherwise the sub dict is create for the seqID 
 
     Returns:
         id_dict (dict): The updated id_dict
@@ -229,7 +224,9 @@ def read_asmc_output(id_dict, file, empty=True):
     return id_dict
 
 
-def read_identity_target_ref(id_dict, file):
+def read_identity_target_ref(id_dict:Dict[str, Union[str, int, None]],
+                             file:Path) -> Tuple[Dict[str, Union[str, int, None]],
+                                                 Set[str]]:
     """Reads the identity_target_ref.tsv file
 
     Args:
@@ -248,11 +245,6 @@ def read_identity_target_ref(id_dict, file):
             split_line = line.strip().split()
             try:
                 ref_set.add(split_line[1])
-                '''
-                id_dict[split_line[0]]["ref"]["id"] = split_line[1]
-                id_dict[split_line[0]]["ref"]["pid"] = split_line[2]
-                id_dict[split_line[0]]["ref"]["seq"] = id_dict[split_line[1]]["f1"]
-                '''
                 id_dict[split_line[0]]["ref_id"] = split_line[1]
                 id_dict[split_line[0]]["ref_pid"] = split_line[2]
                 id_dict[split_line[0]]["ref_seq"] = id_dict[split_line[1]]["f1"]
@@ -262,7 +254,7 @@ def read_identity_target_ref(id_dict, file):
     
     return id_dict, ref_set
 
-def LD_two_rows(s1, s2):
+def LD_two_rows(s1: str, s2: str) -> int:
     """Calcultes Levenshtein distance between two strings
     
     Simple implementation of Levenshtein distance based on the two rows
@@ -298,7 +290,7 @@ def LD_two_rows(s1, s2):
     
     return rowB[-1]
 
-def compute_levenshtein(id_dict):
+def compute_levenshtein(id_dict: Dict[str,Union[str, int, None]]) -> Dict[str, Union[str, int, None]]:
     """Calculates all possible distances
 
     Args:
@@ -311,38 +303,33 @@ def compute_levenshtein(id_dict):
     for key in id_dict:
         seq1 = id_dict[key]["f1"]
         seq2 = id_dict[key]["f2"]
-        #seq_ref = id_dict[key]["ref"]["seq"]
         seq_ref = id_dict[key]["ref_seq"]
         
         # SeqID present in f1 and f2 -> Levenshtein distance between their seqs
         if seq1 is not None and seq2 is not None:
             distance = LD_two_rows(seq1, seq2)
-            #id_dict[key]["d"] = distance
             id_dict[key]["d"] = distance
             
             # Levenshtein distance between seq1 - seq_ref and seq2 - seq_ref
             if seq_ref is not None:
                 distance = LD_two_rows(seq_ref, seq1)
-                #id_dict[key]["ref"]["d1"] = distance
                 id_dict[key]["ref_d1"] = distance
                 distance = LD_two_rows(seq_ref, seq2)
-                #id_dict[key]["ref"]["d2"] = distance
                 id_dict[key]["ref_d2"] = distance
         
         # Levenshtein distance between seq_ref - seq1 or seq2
         elif seq_ref is not None:
             if seq1 is not None:
                 distance = LD_two_rows(seq_ref, seq1)
-                #id_dict[key]["ref"]["d1"] = distance
                 id_dict[key]["ref_d1"] = distance
             else:
                 distance = LD_two_rows(seq_ref, seq2)
-                #id_dict[key]["ref"]["d2"] = distance
                 id_dict[key]["ref_d2"] = distance
     
     return id_dict
 
-def build_active_site_checking_file(id_dict, ref_set):
+def build_active_site_checking_file(id_dict: Dict[str, Union[str, int, None]],
+                                    ref_set: Set[str]) -> str:
     """format text of active site checking
 
     Args:
@@ -392,14 +379,14 @@ def build_active_site_checking_file(id_dict, ref_set):
         
     return text
     
-def extract_aa(file, pos, aa, group):
+def extract_aa(file: Path, pos: int, aa: str, group: Optional[int]):
     """Extracts sequences with a specific amino acid type at a given position
 
     Args:
         file (pathlib.Path): File path
         pos (int): Position in the sequence 
         aa (str): 1-letter amino acid or amino acid type
-        group (int): Group id
+        group (int, optional): Group id
 
     Returns:
         result (str): The extracted lines
