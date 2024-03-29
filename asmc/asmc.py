@@ -685,7 +685,7 @@ def build_logo(lenght: int, fasta: Path, outdir: Path, n: int, prefix: str,
         logging.error(f"An error has occured when creating the logo of" 
                       f" {prefix}{n}:\n{error}")
     
-def merge_logo(outdir: Path, n: int, prefix: str, out_format: str) -> str:
+def merge_logo(outdir: Path, n: int, prefix: str, out_format: str):
     """Merge single logo files
 
     Args:
