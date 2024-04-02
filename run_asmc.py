@@ -619,8 +619,9 @@ if __name__ == "__main__":
                                                   weighted_pos)
     
     if len(warn_set) != 0:
-        warn = " And ".join(warn_set)
-        logging.warning(warn)
+        warn = ", ".join(warn_set)
+        logging.warning(f"These characters list: {warn} isn't in the distances "
+                        "matrix, they are given the maximum score same as a gap")
     
     perc = np.percentile(data, [25, 50, 75])
     

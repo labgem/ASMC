@@ -3,7 +3,7 @@ import logging
 import re
 from itertools import groupby
 from pathlib import Path
-from typing import Dict, List, Tuple, Union, Any, Optional
+from typing import Dict, List, Tuple, Set, Union, Any, Optional
 
 import numpy as np
 from sklearn import preprocessing
@@ -498,7 +498,7 @@ def read_matrix(matrix: Path) -> Dict[str, Dict[str, int]]:
     return scoring_dict
 
 def pairwise_score(scoring_dict: Dict[str, Dict[str, int]], seqA: str, seqB: str,
-                   weighted_pos: List[int]) -> int:
+                   weighted_pos: List[int]) -> Tuple[int, Set[str]]:
     """Compute the score (distance) between two sequences
 
     Args:
@@ -509,7 +509,7 @@ def pairwise_score(scoring_dict: Dict[str, Dict[str, int]], seqA: str, seqB: str
 
     Returns:
         score (int): The score
-        warn (str): Warning text
+        warn (set): Set containing the characters not in the scoring_dict
     """
     
     warn = ""
@@ -528,9 +528,7 @@ def pairwise_score(scoring_dict: Dict[str, Dict[str, int]], seqA: str, seqB: str
                     score += scoring_dict[posA][posB]
             except KeyError:
                 
-                warn = "At least one of these two characters isn't in the "
-                warn += f"distances matrix: '{posA}' '{posB}', they are given "
-                warn += "the maximum score same as a gap."
+                warn = set(x for x in [posA, posB] if x not in scoring_dict)
                 
                 if i+1 in weighted_pos:
                     score += 20 * 5
@@ -540,7 +538,7 @@ def pairwise_score(scoring_dict: Dict[str, Dict[str, int]], seqA: str, seqB: str
     return score, warn
 
 def dissimilarity(sequences: Dict[str, str], scoring_dict: Dict[str, Dict[str, int]],
-                  weighted_pos: List[int]) -> Tuple[List[str], np.ndarray]:
+                  weighted_pos: List[int]) -> Tuple[List[str], np.ndarray, Set[str]]:
     """Build the dissimilarity/distance matrix
 
     Args:
@@ -569,8 +567,8 @@ def dissimilarity(sequences: Dict[str, str], scoring_dict: Dict[str, Dict[str, i
                                              sequences[key1],
                                              sequences[key2],
                                              weighted_pos)
-                if warn != "":
-                    warn_set.add(warn)
+                if len(warn) != 0:
+                    warn_set.update(warn)
                 
             row.append(score)
         data.append(row)
@@ -604,6 +602,7 @@ def dbscan_clustering(data: np.ndarray, threshold: float, min_samples: int,
         
         labels = dbscan.fit_predict(X=data)
     except Exception as error:
+        raise Exception(f"An error has occured during the clustering:\n")
         logging.error(f"An error has occured during the clustering:\n{error}")
         sys.exit(1)
     
