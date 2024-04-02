@@ -666,14 +666,14 @@ if __name__ == "__main__":
                           f"{args.min_samples}")
             sys.exit(1)
     
-    '''
-    if test != 1
-    eps_list contains 1 value, the '.' is replaced by '_'. The str_eps is then
-    used in the output file name.
     
-    if test == 1 the first 3 values in eps_list are 0.3, 0.2 and 0.1 so, the '.'
-    is replaced by '_'. Next, the value in str_eps_list is used
-    '''          
+    # if test != 1
+    # eps_list contains 1 value, the '.' is replaced by '_'. The str_eps is then
+    # used in the output file name.
+    
+    # if test == 1 the first 3 values in eps_list are 0.3, 0.2 and 0.1 so, the '.'
+    # is replaced by '_'. Next, the value in str_eps_list is used
+              
     str_eps_list = ["q1", "q1-10p", "q1-15p", "q1-20p", "q1-25p"]
     for i, eps in enumerate(eps_list):
         if i <= 2:
@@ -685,9 +685,13 @@ if __name__ == "__main__":
         
         # DBSCAN Clustering
         logging.info(f"eps: {eps}\tmin_samples: {min_samples}")
-        labels = asmc.dbscan_clustering(data=data, threshold=eps,
-                                        min_samples=min_samples,
-                                        threads=args.threads)
+        try:
+            labels = asmc.dbscan_clustering(data=data, threshold=eps,
+                                            min_samples=min_samples,
+                                            threads=args.threads)
+        except Exception as error:
+            logging.error(error)
+            sys.exit(1)
         
         # Get the number of groups and the number of sequences per group
         unique, count = np.unique(labels, return_counts=True)

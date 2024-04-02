@@ -602,9 +602,7 @@ def dbscan_clustering(data: np.ndarray, threshold: float, min_samples: int,
         
         labels = dbscan.fit_predict(X=data)
     except Exception as error:
-        raise Exception(f"An error has occured during the clustering:\n")
-        logging.error(f"An error has occured during the clustering:\n{error}")
-        sys.exit(1)
+        raise Exception(f"An error has occured during the clustering:\n{error}")
     
     return labels
 
