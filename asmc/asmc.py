@@ -29,6 +29,11 @@ def build_ds(ref: Path, outdir: Path, chains: str) -> Tuple[Path, str]:
         outdir (pathlib.Path): Path to the output directory
         chains (str): String indicating which chain to search
 
+    Raises:
+        FileNotFoundError: Raised when a file indicating in ref isn't found
+        Exception: Others exception which could occured during the read of the
+        ref file
+
     Returns:
         ds (pathlib.Path): Path to the dataset file
         text (str): Text to write in the dataset file
@@ -61,9 +66,13 @@ def extract_pocket(outdir: Path) -> Dict[str, List[int]]:
 
     Args:
         outdir (pathlib.Path): Path to the output directory
+    
+    Raises:
+        RuntimeError: Raised when there is no p2rank output
 
     Returns:
-        res_dict (dict): Dict containing as key the chain and as values the positions
+        res_dict (dict): Dict containing as key the chain and as values the
+        positions
     """
     
     try:
@@ -112,9 +121,13 @@ def build_pocket_text(ref: Path, res_dict: Dict[str, List[int]], outdir: Path,
 
     Args:
         ref (patlib.Path): Path to reference file
-        res_dict (dict): Dict containing as key the chain and as values the positions
+        res_dict (dict): Dict containing as key the chain and as values the
+        positions
         outdir (pathlib.Path): Path to the output directory
         query_chain (str): 'all' or value from the command line option
+        
+    Raises:
+        Exception: Raised when the p2ranl output is empty
 
     Returns:
         output (pathlib.Path): Path of the pocket output file
@@ -129,7 +142,7 @@ def build_pocket_text(ref: Path, res_dict: Dict[str, List[int]], outdir: Path,
     
     try:
         chain = list(res_dict.keys())[0]
-    except Exception as error:
+    except Exception:
         raise Exception("None results for p2rank, this may be due to an incorrect "
                         f"query chain value : {query_chain}")
     res_str = ''
@@ -143,6 +156,12 @@ def build_pocket_text(ref: Path, res_dict: Dict[str, List[int]], outdir: Path,
 ## ----------------------- Strcutural alignment ----------------------------- ##
 
 class RenumberResiduesError(Exception):
+    """Exception raised when an error occur during the renumber_residues function
+
+    Attribute:
+        pdb (Path): The Pdb file which caused the error
+        num (int): If != 0 it's indicate the line number which caused the error
+    """
     
     def __init__(self, pdb: Path, num: int = 0) -> None:
         self.pdb = pdb
@@ -161,6 +180,10 @@ def renumber_residues(ref_list: Tuple[Path, str, List[int]]) -> List[int]:
 
     Args:
         ref_list (tuple or list): [pathlib.Path, str(chain), list(positions)]
+
+    Raises:
+        RenumberResiduesError: Raised when error occur during the read of a line
+        or when renum don't have the right size
 
     Returns:
         renum (list): Renumbered positions
@@ -330,6 +353,9 @@ def search_active_site_in_msa(msa: Path) -> str:
         references, path to tsv file indicating the reference of each sequence
         and the path of msa
 
+    Raises:
+        FileNotFoundError: Raised when a file isn't found
+
     Returns:
         str: multiple alignment of active sites to write in a file
     """
@@ -468,9 +494,15 @@ def read_matrix(matrix: Path) -> Dict[str, Dict[str, int]]:
 
     Args:
         matrix (pathlib.Path): Path of the tsv file
+        
+    Raises:
+        ValueError: Raised when the file couldn't be splitted with tabluations
+        RuntimeError: Raised when we can't build the scoring_dict because the
+        matrix seems to not be symetrical
 
     Returns:
-        scoring_dict (dict): Dictionnary of dictionnary for access to each distance between amino acid
+        scoring_dict (dict): Dictionnary of dictionnary for access to each
+        distance between amino acid
     """
     
     if not matrix.exists():
@@ -493,7 +525,7 @@ def read_matrix(matrix: Path) -> Dict[str, Dict[str, int]]:
                                         for i in range(len(aa_order))}
                 except:
                     raise RuntimeError("An error has occured while reading the "
-                                       "distances matreix. The matrix may not "
+                                       "distances matrix. The matrix may not "
                                        "be symetrical")
     return scoring_dict
 
@@ -502,10 +534,12 @@ def pairwise_score(scoring_dict: Dict[str, Dict[str, int]], seqA: str, seqB: str
     """Compute the score (distance) between two sequences
 
     Args:
-        scoring_dict (dict): Dictionnary of dictionnary for access to each distance between amino acid
+        scoring_dict (dict): Dictionnary of dictionnary for access to each
+        distance between amino acid
         seqA (str): A sequence
         seqB (str): A sequence
-        weigted_pos (list): List containing positions with more weight for score calculation
+        weigted_pos (list): List containing positions with more weight for score
+        calculation
 
     Returns:
         score (int): The score
@@ -542,9 +576,12 @@ def dissimilarity(sequences: Dict[str, str], scoring_dict: Dict[str, Dict[str, i
     """Build the dissimilarity/distance matrix
 
     Args:
-        sequences (dict): Dictionnary with the sequence id as key and the corresponding sequence as value
-        scoring_dict (dict): Dictionnary of dictionnary for access to each distance between amino acid
-        weigted_pos (list): List containing positions with more weight for score calculation
+        sequences (dict): Dictionnary with the sequence id as key and the
+        corresponding sequence as value
+        scoring_dict (dict): Dictionnary of dictionnary for access to each
+        distance between amino acid
+        weigted_pos (list): List containing positions with more weight for score
+        calculation
 
     Returns:
         data (np.ndarray): The distance matrix
@@ -587,10 +624,13 @@ def dbscan_clustering(data: np.ndarray, threshold: float, min_samples: int,
     Args:
         data (np.ndarray): The distance matrix
         threshold (float): The maximum disatnce between two samples for one to
-                           be considered as in the neighborhood of the other
+        be considered as in the neighborhood of the other
         min_samples (int): The number of samples in an neighborhood for a point
-                           to be considered as a core point
+        to be considered as a core point
         threads (int): Number of CPU threads
+
+    Raises:
+        Exception: Raised when an error has occured dring the clustering
 
     Returns:
         labels (np.ndarray): Cluster id for each sequences
@@ -611,9 +651,13 @@ def formatting_output(sequences: Dict[str, str], key_list: List[str],
     """Format data to write output
 
     Args:
-        sequences (dict): Dictionnary with the sequence id as key and the corresponding sequence as value
+        sequences (dict): Dictionnary with the sequence id as key and the
+        corresponding sequence as value
         key_list (list):  The list of sequences id present in the clustering
         labels (np.ndarray): Cluster id for each sequences
+        
+    Raises:
+        Exception: Raised when an error has occured
 
     Returns:
         G (list): Sorted data
@@ -623,7 +667,7 @@ def formatting_output(sequences: Dict[str, str], key_list: List[str],
         G = [(key_list[i], sequences[key_list[i]], n) for i, n in enumerate(labels)]
         G = sorted(G, key=lambda x: x[2])
     except Exception as error:
-        raise Exception(f"An error has occured durint output formatting:\n{error}")
+        raise Exception(f"An error has occured during output formatting:\n{error}")
     
     return G
 
@@ -657,7 +701,11 @@ def build_logo(lenght: int, fasta: Path, outdir: Path, n: int, prefix: str,
         n (int): Cluster id
         prefix (str): Prefix for the weblogo title
         out_format (str): eps or png
-
+        
+    Raises:
+        Exception: Raised when an error has occured during the creation of the
+        logo. This can happen when an error occurs with ghoscript or other
+        weblogo dependencies
     """
     
     with open(fasta, "r") as fin:
@@ -683,7 +731,7 @@ def build_logo(lenght: int, fasta: Path, outdir: Path, n: int, prefix: str,
         raise Exception("An error has occured when creating the logo of"
                         f" {prefix}{n}:\n{error}")
     
-def merge_logo(outdir: Path, n: int, prefix: str, out_format: str):
+def merge_logo(outdir: Path, n: int, prefix: str, out_format: str) -> None:
     """Merge single logo files
 
     Args:
