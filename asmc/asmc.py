@@ -509,8 +509,10 @@ def pairwise_score(scoring_dict: Dict[str, Dict[str, int]], seqA: str, seqB: str
 
     Returns:
         score (int): The score
+        warn (str): Warning text
     """
     
+    warn = ""
     score = 0
     for i, (posA, posB) in enumerate(zip(seqA, seqB)):
         if posA in ["-", "X"] or posB in ["-", "X"]:
@@ -525,16 +527,17 @@ def pairwise_score(scoring_dict: Dict[str, Dict[str, int]], seqA: str, seqB: str
                 else:
                     score += scoring_dict[posA][posB]
             except KeyError:
-                logging.warning("At leats one of these two characters isn't "
-                                f"in the distances matrix: {posA} {posB}, they "
-                                "are given the same score as '-' and 'X'")
+                
+                warn = "At least one of these two characters isn't in the "
+                warn += f"distances matrix: '{posA}' '{posB}', they are given "
+                warn += "the maximum score same as a gap."
                 
                 if i+1 in weighted_pos:
                     score += 20 * 5
                 else:
                     score += 20
     
-    return score
+    return score, warn
 
 def dissimilarity(sequences: Dict[str, str], scoring_dict: Dict[str, Dict[str, int]],
                   weighted_pos: List[int]) -> Tuple[List[str], np.ndarray]:
@@ -547,9 +550,11 @@ def dissimilarity(sequences: Dict[str, str], scoring_dict: Dict[str, Dict[str, i
 
     Returns:
         data (np.ndarray): The distance matrix
-        key_list (list):  The list of sequences id
+        key_list (list): The list of sequences id
+        warn_set (set): The set of warnning message
     """
     
+    warn_set = set()
     data = []
     key_list = list(sequences.keys())
         
@@ -560,10 +565,12 @@ def dissimilarity(sequences: Dict[str, str], scoring_dict: Dict[str, Dict[str, i
             if key1 == key2:
                 score = 0.0
             else:
-                score = pairwise_score(scoring_dict,
-                                       sequences[key1],
-                                       sequences[key2],
-                                       weighted_pos)
+                score, warn = pairwise_score(scoring_dict,
+                                             sequences[key1],
+                                             sequences[key2],
+                                             weighted_pos)
+                if warn != "":
+                    warn_set.add(warn)
                 
             row.append(score)
         data.append(row)
@@ -573,7 +580,7 @@ def dissimilarity(sequences: Dict[str, str], scoring_dict: Dict[str, Dict[str, i
         X=data.reshape(-1,1)
     ).reshape(data.shape)
 
-    return key_list, data
+    return key_list, data, warn_set
 
 def dbscan_clustering(data: np.ndarray, threshold: float, min_samples: int,
                       threads: int) -> np.ndarray:

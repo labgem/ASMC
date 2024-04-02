@@ -596,6 +596,8 @@ if __name__ == "__main__":
     matrix = Path(yml["distances"])
     try:
         scoring_dict = asmc.read_matrix(matrix)
+    except ValueError as error:
+        logging.error(error)
     except RuntimeError as error:
         logging.error(error)
         sys.exit(1)
@@ -613,7 +615,13 @@ if __name__ == "__main__":
         logging.info(f"Weighted positions: {weighted_pos}")
     
     logging.info("Compute Dissimilarities")
-    key_list, data = asmc.dissimilarity(sequences, scoring_dict, weighted_pos)
+    key_list, data, warn_set = asmc.dissimilarity(sequences, scoring_dict,
+                                                  weighted_pos)
+    
+    if len(warn_set) != 0:
+        warn = " And ".join(warn_set)
+        logging.warning(warn)
+    
     perc = np.percentile(data, [25, 50, 75])
     
     logging.info(f"q1\tmed\tq3\tmean")
