@@ -734,7 +734,7 @@ if __name__ == "__main__":
         # Make logo for each group
         for n in unique:
             group_seq = [elem for elem in G if elem[-1] == n]
-            fasta = Path.joinpath(outdir, f"G{n}.fasta")
+            fasta = Path.joinpath(outdir, f"{args.prefix}{n}.fasta")
             fasta_text = asmc.build_fasta(group=group_seq)
             fasta.write_text(fasta_text)
             try:
