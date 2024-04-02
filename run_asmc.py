@@ -457,7 +457,16 @@ if __name__ == "__main__":
                 
             ds.write_text(ds_text)
             prank_results = run_prank(yml, ds, prank_output)
-            pocket_dict = asmc.extract_pocket(prank_output)
+            
+            try:
+                pocket_dict = asmc.extract_pocket(prank_output)
+            except RuntimeError as error:
+                logging.error(error)
+                sys.exit(1)
+            except Exception as error:
+                logging.error(error)
+                sys.exit(1)
+            
             pocket_file, pocket_text = asmc.build_pocket_text(ref_file,
                                                               pocket_dict,
                                                               outdir,

@@ -48,7 +48,6 @@ def build_ds(ref: Path, outdir: Path, chains: str) -> Tuple[Path, str]:
     if chains == "all":
         chains = "*"
     
-    
     # Writng the file
     text = f"HEADER: protein chains\n\n{pdb} {chains}"
             
@@ -70,8 +69,7 @@ def extract_pocket(outdir: Path) -> Dict[str, List[int]]:
     try:
         prediction = [f for f in outdir.iterdir() if f.match("*predictions*")][0]
     except IndexError:
-        logging.error(f"No predictions file after running p2rank")
-        sys.exit(1)
+        raise RuntimeError(f"No predictions file after running p2rank")
     
     pred_arr = np.loadtxt(prediction, skiprows=1, delimiter=",",
                           converters={x:conv for x in range(11)},
@@ -99,9 +97,8 @@ def extract_pocket(outdir: Path) -> Dict[str, List[int]]:
             else:
                 break
     except Exception as error:
-        logging.error("An error has occured while reading prediction file "
-                      f"from p2rank:\n{error}")
-        sys.exit(1)
+        raise Exception("An error has occured while reading prediction file "
+                        f"from p2rank:\n{error}")
     
     return res_dict
 
