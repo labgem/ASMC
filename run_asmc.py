@@ -594,7 +594,11 @@ if __name__ == "__main__":
     
     logging.info("Reading Scoring Matrix")
     matrix = Path(yml["distances"])
-    scoring_dict = asmc.read_matrix(matrix)
+    try:
+        scoring_dict = asmc.read_matrix(matrix)
+    except RuntimeError as error:
+        logging.error(error)
+        sys.exit(1)
     
     # Check if user has provided weighted positions
     if args.weighted_pos is None:

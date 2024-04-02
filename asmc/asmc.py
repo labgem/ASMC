@@ -484,19 +484,17 @@ def read_matrix(matrix: Path) -> Dict[str, Dict[str, int]]:
             if i == 0:
                 aa_order = line.strip().split("\t")
                 if len(aa_order) == 1:
-                    logging.error(f"{matrix} seems to not be a tsv file")
-                    sys.exit(1)
+                    raise ValueError(f"'{matrix}' seems to not be a tsv file")
+
             else:
                 sl = line.strip().split("\t")
                 try:
                     scoring_dict[sl[0]] = {aa_order[i]:int(sl[1:][i])
                                         for i in range(len(aa_order))}
                 except:
-                    logging.error("An error has occured while reading the "
-                                  "distances matrix. The matrix may not be "
-                                  "symetrical")
-                    sys.exit(1)
-                    
+                    raise RuntimeError("An error has occured while reading the "
+                                       "distances matreix. The matrix may not "
+                                       "be symetrical")
     return scoring_dict
 
 def pairwise_score(scoring_dict: Dict[str, Dict[str, int]], seqA: str, seqB: str,
