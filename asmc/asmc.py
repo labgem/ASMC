@@ -131,7 +131,7 @@ def build_pocket_text(ref: Path, res_dict: Dict[str, List[int]], outdir: Path,
         chain = list(res_dict.keys())[0]
     except Exception as error:
         raise Exception("None results for p2rank, this may be due to an incorrect "
-                        f"--chain value : {query_chain}")
+                        f"query chain value : {query_chain}")
     res_str = ''
     for elem in res_dict[chain]:
         res_str += f',{elem}'
@@ -141,6 +141,20 @@ def build_pocket_text(ref: Path, res_dict: Dict[str, List[int]], outdir: Path,
     return output, text
 
 ## ----------------------- Strcutural alignment ----------------------------- ##
+
+class RenumberResiduesError(Exception):
+    
+    def __init__(self, pdb: Path, num: int = 0) -> None:
+        self.pdb = pdb
+        if num != 0:
+            self.message = f"An error has occured while reading {pdb}, line {num}"
+            self.message += " seems to be incorrectly formatted"
+        else:
+            self.message = "An error has occured when renumbering the residues "
+            self.message += "of reference. This may caused by a residue number "
+            self.message += "indicated in the pocket file not found in the "
+            self.message += f"'{pdb}' or a duplicated residue number"
+        super().__init__(self.message)
 
 def renumber_residues(ref_list: Tuple[Path, str, List[int]]) -> List[int]:
     """Renumbering reference structure
@@ -172,18 +186,10 @@ def renumber_residues(ref_list: Tuple[Path, str, List[int]]) -> List[int]:
                     if resn in true_pos and i not in renum:
                         renum.append(i)
         except IndexError:
-            logging.error(f"An error has occured while reading {pdb}, line {num}"
-                          f" seems to be incorrectly formatted\n:{line.strip()}")
-            sys.exit(1)
-    
+            raise RenumberResiduesError(pdb, num+1)
     
     if len(renum) != len(true_pos):
-        logging.error("An error has occured when renumbering the residues of "
-                      "reference. This may be caused by a residue number indicated "
-                      f"in the pocket file not found in the {pdb} or a "
-                      "duplicated number")
-        sys.exit(1)
-    
+        raise RenumberResiduesError(pdb)
     return renum
 
 def extract_aligned_pos(id_ref: str, id_model: str,

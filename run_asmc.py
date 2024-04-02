@@ -472,7 +472,10 @@ if __name__ == "__main__":
                                                                 pocket_dict,
                                                                 outdir,
                                                                 args.chain)
-            except Exception as error:
+            except BufferError as error:
+                logging.error(error)
+                sys.exit(1)
+            except RuntimeError as error:
                 logging.error(error)
                 sys.exit(1)
                 
@@ -548,8 +551,12 @@ if __name__ == "__main__":
             logging.info(f"SPA elasped time: {datetime.datetime.now() - pair_start}")
             
             logging.info("Start the built of active site multiple alignment")
-            text = asmc.build_multiple_alignment(pairwise_dir, ref_file,
-                                                 pocket_file)
+            try:
+                text = asmc.build_multiple_alignment(pairwise_dir, ref_file,
+                                                     pocket_file)
+            except asmc.RenumberResiduesError as error:
+                logging.error(error)
+                sys.exit(1)
                 
             multiple_alignment = Path.joinpath(outdir,
                                                "active_site_alignment.fasta")
