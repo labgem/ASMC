@@ -129,11 +129,9 @@ def build_pocket_text(ref: Path, res_dict: Dict[str, List[int]], outdir: Path,
     
     try:
         chain = list(res_dict.keys())[0]
-    except:
-        logging.error(f"0 results for p2rank, this may be due to an incorrect "
-                      f"--chain value : {query_chain}")
-        sys.exit(1)
-    
+    except Exception as error:
+        raise Exception("None results for p2rank, this may be due to an incorrect "
+                        f"--chain value : {query_chain}")
     res_str = ''
     for elem in res_dict[chain]:
         res_str += f',{elem}'

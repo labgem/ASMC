@@ -467,10 +467,15 @@ if __name__ == "__main__":
                 logging.error(error)
                 sys.exit(1)
             
-            pocket_file, pocket_text = asmc.build_pocket_text(ref_file,
-                                                              pocket_dict,
-                                                              outdir,
-                                                              args.chain)
+            try:
+                pocket_file, pocket_text = asmc.build_pocket_text(ref_file,
+                                                                pocket_dict,
+                                                                outdir,
+                                                                args.chain)
+            except Exception as error:
+                logging.error(error)
+                sys.exit(1)
+                
             pocket_file.write_text(pocket_text)
             logging.info("Pocket detection duration: "
                          f"{datetime.datetime.now() - start}")
