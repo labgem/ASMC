@@ -706,7 +706,11 @@ if __name__ == "__main__":
             logging.info("silhouette score: -")
         
         # Formats a list which is then used to write the output file
-        G = asmc.formatting_output(sequences, key_list, labels)
+        try:
+            G = asmc.formatting_output(sequences, key_list, labels)
+        except Exception as error:
+            logging.error(error)
+            sys.exit(1)
             
         if len(eps_list) <= 1:
             dbscan_output = Path.joinpath(outdir,

@@ -623,8 +623,7 @@ def formatting_output(sequences: Dict[str, str], key_list: List[str],
         G = [(key_list[i], sequences[key_list[i]], n) for i, n in enumerate(labels)]
         G = sorted(G, key=lambda x: x[2])
     except Exception as error:
-        logging.error(f"An error has occured durint output formatting:\n{error}")
-        sys.exit(1)
+        raise Exception(f"An error has occured durint output formatting:\n{error}")
     
     return G
 
