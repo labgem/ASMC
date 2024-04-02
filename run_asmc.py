@@ -420,21 +420,21 @@ if __name__ == "__main__":
         # check references
         ref_file = Path(args.ref).absolute()
         if not ref_file.exists():
-            logging.error(f"{ref_file} doesn't exist")
+            logging.error(f"{ref_file} file not found")
             sys.exit(1)
         
         ref_list = ref_file.read_text().split()
         for r in ref_list:
             if not Path(r).exists():
                 logging.error(f"An error has occured while reading {ref_file}: "
-                              f"{r} doesn't exist")
+                              f"{r} file not found")
                 sys.exit(1)
         
         # Check pocket
         if not args.pocket is None:
             pocket_file = Path(args.pocket).absolute()
             if not pocket_file.exists():
-                logging.error(f"{pocket_file} doesn't exist")
+                logging.error(f"{pocket_file} file not found")
                 sys.exit(1)
         
         # Run p2rank to detect pocket
@@ -496,7 +496,7 @@ if __name__ == "__main__":
     if not args.seqs is None:
         seq_path = Path(args.seqs).absolute()
         if not seq_path.exists():
-            logging.error(f"argument -s/--seqs '{seq_path}' doesn't exist")
+            logging.error(f"argument -s/--seqs '{seq_path}' file not found")
             sys.exit(1)
         else:
             
@@ -528,7 +528,7 @@ if __name__ == "__main__":
     if not args.models is None:
         models_file = Path(args.models).absolute()
         if not models_file.exists():
-            logging.error(f"argument -m/--models '{models_file}' doesn't exist")
+            logging.error(f"argument -m/--models '{models_file}' file not found")
             sys.exit(1)
     
     # Means that modeling step has been run and the models.txt file created
@@ -574,7 +574,7 @@ if __name__ == "__main__":
                                                    "active_site_alignment.fasta")
                 multiple_alignment.write_text(text)
             else:
-                logging.error(f"argument -M/--msa '{args.msa}' doesn't exist")
+                logging.error(f"argument -M/--msa '{args.msa}' file not found")
 
     # An active site alignment is provided
     else:
