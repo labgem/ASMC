@@ -35,16 +35,13 @@ def build_ds(ref: Path, outdir: Path, chains: str) -> Tuple[Path, str]:
     """
     
     # Use the 1st reference in the file
-    logging.info("Using the 1st reference structure to detect pocket")
     try:
         pdb = ref.read_text().split("\n")[0]
         if not Path(pdb).exists():
-            logging.error("Path to the 1st reference structure in reference "
-                          f"file doesn't exist: {pdb}")
-            sys.exit(1)
+            raise FileNotFoundError(f"{pdb} file not found")
+
     except Exception as error:
-        logging.error(f"An error has occured while reading {ref}:\n{error}")
-        sys.exit(1)
+        raise Exception(f"An error has occured while reading {ref}:\n{error}")
     
     # Detect which chain
     ds = Path.joinpath(outdir, "data.ds")

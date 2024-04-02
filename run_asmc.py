@@ -443,8 +443,18 @@ if __name__ == "__main__":
             if not prank_output.exists():
                 prank_output.mkdir()
             
-            start = datetime.datetime.now()  
-            ds, ds_text = asmc.build_ds(ref_file, prank_output, args.chain)
+            start = datetime.datetime.now()
+            logging.info("Using the 1st reference structure to detect pocket")
+            
+            try:
+                ds, ds_text = asmc.build_ds(ref_file, prank_output, args.chain)
+            except FileNotFoundError as error:
+                logging.error(error)
+                sys.exit(1)
+            except Exception as error:
+                logging.error(error)
+                sys.exit(1)
+                
             ds.write_text(ds_text)
             prank_results = run_prank(yml, ds, prank_output)
             pocket_dict = asmc.extract_pocket(prank_output)
