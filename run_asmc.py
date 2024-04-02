@@ -737,8 +737,11 @@ if __name__ == "__main__":
             fasta = Path.joinpath(outdir, f"G{n}.fasta")
             fasta_text = asmc.build_fasta(group=group_seq)
             fasta.write_text(fasta_text)
-            asmc.build_logo(len(group_seq), fasta, outdir, n, args.prefix,
-                            args.format)
+            try:
+                asmc.build_logo(len(group_seq), fasta, outdir, n, args.prefix,
+                                args.format)
+            except Exception as error:
+                logging.error(error)
         
         # Merge logos in a single file
         asmc.merge_logo(outdir, len(unique), args.prefix, args.format)  
