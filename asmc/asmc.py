@@ -353,15 +353,14 @@ def search_active_site_in_msa(msa: Path) -> str:
                     id_file = Path(line.strip())
             
     if not aln.exists():
-        logging.error("An error has occured while reading "
-                      f"'{msa}':\n'{aln}' doesn't exists")
-        sys.exit(1)
+        raise FileNotFoundError("An error has occured while reading "
+                                f"'{msa}':\n'{aln}' file not found")
     
     if id_file != "":
         if not id_file.exists():
-            logging.error("An erro has occured while reading "
-                        f"'{msa}':\n'{id_file}' doesn't exists")
-            sys.exit(1)
+            raise FileNotFoundError("An error has occured while reading "
+                                    f"'{msa}':\n'{id_file}' file not found")
+            
         elif id_file.exists:
             # Get the reference for each sequences
             map_target_ref = {}

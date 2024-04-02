@@ -566,7 +566,10 @@ if __name__ == "__main__":
         else:
             if Path(args.msa).exists():
                 logging.info("Start the built of active site multiple alignment")
-                text = asmc.search_active_site_in_msa(Path(args.msa))
+                try:
+                    text = asmc.search_active_site_in_msa(Path(args.msa))
+                except FileNotFoundError as error:
+                    logging.error(error)
                 multiple_alignment = Path.joinpath(outdir,
                                                    "active_site_alignment.fasta")
                 multiple_alignment.write_text(text)
