@@ -26,7 +26,7 @@ def read_yaml(args):
     │   └── config_asmc.yml
     ├── run_asmc.py
     └── ascm
-        ├── __inti__.py
+        ├── __init__.py
         ├── asmc.py
         └── ...
 

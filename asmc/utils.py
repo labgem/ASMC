@@ -13,10 +13,11 @@ class FileFormatError(Exception):
 
     Attribute:
         file (pathlib.Path): file which caused the error
+        n (int): number of columns
     """
-    def __init__(self, file: Path) -> None:
+    def __init__(self, file: Path, n: int) -> None:
         self.file = file
-        self.message = f"'{file}' does not appear to contain at least 2 columns"
+        self.message = f"'{file}' does not appear to contain at least {n} columns"
         super().__init__(self.message)
 
 class PositionError(Exception):
@@ -414,7 +415,7 @@ def extract_aa(file: Path, pos: int, aa: str, group: Optional[int]):
                 try:
                     sequence = line.split("\t")[1]
                 except IndexError:
-                    raise FileFormatError(file)
+                    raise FileFormatError(file, 2)
                 
                 try:
                     if sequence[pos-1] in aa_list:
@@ -429,7 +430,7 @@ def extract_aa(file: Path, pos: int, aa: str, group: Optional[int]):
                     sequence = line.split()[1]
                     group_line = line.split()[2]
                 except IndexError:
-                    raise FileFormatError(file)
+                    raise FileFormatError(file, 2)
                     
                 if str(group) == group_line:
                     try:
@@ -439,3 +440,44 @@ def extract_aa(file: Path, pos: int, aa: str, group: Optional[int]):
                         raise PositionError(pos, len(sequence))
                         
     return result
+
+def get_stats(group_file: Path) -> Dict[str, Dict[str, Union[float, Set[str]]]]:
+    
+    unique_seq = {}
+    
+    with open(group_file, "r") as f:
+        for line in f:
+            splitted = line.strip().split()
+            if len(splitted) < 3:
+                raise FileFormatError(group_file, 3)
+            
+            if splitted[2] not in unique_seq:
+                unique_seq[splitted[2]] = {splitted[1]:{splitted[0]}}
+            elif splitted[1] not in unique_seq[splitted[2]]:
+                unique_seq[splitted[2]][splitted[1]] = {splitted[0]}
+            else:
+                unique_seq[splitted[2]][splitted[1]].add(splitted[0])
+    
+    for group in unique_seq:
+        
+        seq_list = list(unique_seq[group].keys())
+        dist_list = []
+        nb_seq = 0
+        n = len(seq_list)
+        
+        for i in range(n-1):
+            nb_seq += len(unique_seq[group][seq_list[i]])
+        
+            for j in range(i+1, n):
+                d = LD_two_rows(seq_list[i], seq_list[j])
+                dist_list.append(d)
+        
+        nb_seq += len(unique_seq[group][seq_list[n-1]])
+        unique_seq[group]["proportion"] = round(n / nb_seq, 3)
+        
+        try:
+            unique_seq[group]["mean_dist"] = round(sum(dist_list) / len(dist_list), 1)
+        except ZeroDivisionError:
+            unique_seq[group]["mean_dist"] = 0.0
+        
+    return unique_seq
