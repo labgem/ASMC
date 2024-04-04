@@ -441,9 +441,11 @@ def extract_aa(file: Path, pos: int, aa: str, group: Optional[int]):
                         
     return result
 
-def get_stats(group_file: Path) -> Dict[str, Dict[str, Union[float, Set[str]]]]:
+def get_stats(group_file: Path) -> Tuple[Dict[str, Tuple[str, Set[str]]],
+                                         Dict[str, Tuple[int, int, float]]]:
     
     unique_seq = {}
+    group_stats = {}
     
     with open(group_file, "r") as f:
         for line in f:
@@ -452,32 +454,35 @@ def get_stats(group_file: Path) -> Dict[str, Dict[str, Union[float, Set[str]]]]:
                 raise FileFormatError(group_file, 3)
             
             if splitted[2] not in unique_seq:
-                unique_seq[splitted[2]] = {splitted[1]:{splitted[0]}}
-            elif splitted[1] not in unique_seq[splitted[2]]:
-                unique_seq[splitted[2]][splitted[1]] = {splitted[0]}
+                group_stats[splitted[2]] = (0, 0, 0.0)
+            
+            if splitted[1] not in unique_seq:
+                unique_seq[splitted[1]] = (splitted[2], {splitted[0]})
             else:
-                unique_seq[splitted[2]][splitted[1]].add(splitted[0])
+                unique_seq[splitted[1]][1].add(splitted[0])
     
-    for group in unique_seq:
+    for group in group_stats:
+        seq_list = [(s, len(unique_seq[s][1]))
+                    for s in unique_seq if unique_seq[s][0] == group]
+    
+        total = 0
+        nb_unique =  len(seq_list)
+        diff_list = []
+        mean_diff = 0.0
         
-        seq_list = list(unique_seq[group].keys())
-        dist_list = []
-        nb_seq = 0
-        n = len(seq_list)
-        
-        for i in range(n-1):
-            nb_seq += len(unique_seq[group][seq_list[i]])
-        
-            for j in range(i+1, n):
-                d = LD_two_rows(seq_list[i], seq_list[j])
-                dist_list.append(d)
-        
-        nb_seq += len(unique_seq[group][seq_list[n-1]])
-        unique_seq[group]["proportion"] = round(n / nb_seq, 3)
-        
+        for i in range(nb_unique-1):
+            total += seq_list[i][1]
+            
+            for j in range(i+1, nb_unique):
+                d = LD_two_rows(seq_list[i][0], seq_list[j][0])
+                diff_list.append(d)
+                
+        total += seq_list[nb_unique-1][1]
         try:
-            unique_seq[group]["mean_dist"] = round(sum(dist_list) / len(dist_list), 1)
+            mean_diff = sum(diff_list) / len(diff_list)
         except ZeroDivisionError:
-            unique_seq[group]["mean_dist"] = 0.0
+            mean_diff = 0.0
         
-    return unique_seq
+        group_stats[group] = (nb_unique, total, mean_diff)
+        
+    return unique_seq, group_stats
