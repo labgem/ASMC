@@ -6,7 +6,7 @@ from pathlib import Path
 
 group_file = Path(sys.argv[1])
 
-unique_seq, groups_stats = utils.get_stats(group_file)
+unique_seq, groups_stats = utils.get_unique(group_file)
 
 unique_text = "Group\tUnique_Active_Site\tNumber\tSeq_Ids\n"
 group_text = "Group\tNb_Unique\tTotal\tMean_Diff\n"

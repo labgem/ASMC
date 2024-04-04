@@ -441,7 +441,7 @@ def extract_aa(file: Path, pos: int, aa: str, group: Optional[int]):
                         
     return result
 
-def get_stats(group_file: Path) -> Tuple[Dict[str, Tuple[str, Set[str]]],
+def get_unique(group_file: Path) -> Tuple[Dict[str, Tuple[str, Set[str]]],
                                          Dict[str, Tuple[int, int, float]]]:
     """Calculates statistics on the number of unique sequences per groups
 
