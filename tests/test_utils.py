@@ -270,3 +270,66 @@ class TestExtractAA:
         amino_acid_type_error += "type, got 'Z'"
         with pytest.raises(utils.AminoAcidTypeError, match=amino_acid_type_error):
             result = utils.extract_aa(correct_file, 1, 'Z', None)
+            
+class TestGetUnique:
+    
+    @pytest.fixture
+    def data_for_get_unique(self, tmp_path_factory):
+        
+        d = tmp_path_factory.mktemp("data")
+        f = d / "groups.tsv"
+        
+        data = "\n".join([
+            "A\tAZERTY\t1",
+            "B\tAZERTY\t1",
+            "C\tAZERTY\t1",
+            "D\tQWERTY\t2",
+            "E\tQWERTY\t2",
+            "F\tQWERTZ\t2",
+            "G\tQWERTO\t2",
+            "H\tPEPOFR\t3",
+            "I\tPEBOVR\t3",
+            "J\tPENORR\t3",
+            "K\tPETOJR\t3"
+        ])
+        
+        f.write_text(data)
+        
+        bad_file = d / "bad.tsv"
+        
+        bad_data = "\n".join([
+            "Y\tAAAAAA",
+            "Z\tAAAAAA"
+        ])
+    
+        bad_file.write_text(bad_data)
+        
+        yield d
+        
+    def test_get_unique(self, data_for_get_unique):
+        
+        correct_file = data_for_get_unique / "groups.tsv"
+        bad_file = data_for_get_unique / "bad.tsv"
+        
+        with pytest.raises(utils.FileFormatError):
+            unique, stats = utils.get_unique(bad_file)
+            
+        unique, stats = utils.get_unique(correct_file)
+        
+        print(unique)
+        
+        expected_unique = {'AZERTY': ('1', {'A', 'B', 'C'}),
+                           'QWERTY': ('2', {'D', 'E'}),
+                           'QWERTZ': ('2', {'F'}),
+                           'QWERTO': ('2', {'G'}),
+                           'PEPOFR': ('3', {'H'}),
+                           'PEBOVR': ('3', {'I'}),
+                           'PENORR': ('3', {'J'}),
+                           'PETOJR': ('3', {'K'})}
+        
+        expected_stats = {
+            "1":(1, 3, 0.0), "2":(3, 4, 1.0), "3":(4, 4, 2.0)
+        }
+        
+        assert unique == expected_unique
+        assert stats == expected_stats
