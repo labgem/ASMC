@@ -443,7 +443,21 @@ def extract_aa(file: Path, pos: int, aa: str, group: Optional[int]):
 
 def get_stats(group_file: Path) -> Tuple[Dict[str, Tuple[str, Set[str]]],
                                          Dict[str, Tuple[int, int, float]]]:
-    
+    """Calculates statistics on the number of unique sequences per groups
+
+    Args:
+        group_file (Path): ASMC tsv output
+
+    Raises:
+        FileFormatError: Raised if the tsv contains less than 3 columns
+
+    Returns:
+        unique_seq (dict): Dict with seq as key and as value tuple containing
+        the group id and a set of sequence ids
+        
+        groups_stats (dict): Dict with group id as key and a tuple of int and
+        float as value
+    """
     unique_seq = {}
     group_stats = {}
     
