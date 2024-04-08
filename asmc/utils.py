@@ -206,13 +206,16 @@ def read_asmc_output(id_dict: Optional[Dict[str, Union[str, int, None]]],
                                           "ref_seq":None,
                                           "ref_d1":None,
                                           "ref_d2":None,
-                                          "ref_pid":None}
+                                          "ref_pid":None,
+                                          'g1':split_line[-1],
+                                          'g2':None}
                 
         else:
             for line in f:
                 split_line = line.strip().split()
                 try:
                     id_dict[split_line[0]]["f2"] = split_line[1]
+                    id_dict[split_line[0]]["g2"] = split_line[-1]
                 except KeyError:
                     id_dict[split_line[0]] = {"f1":None, "f2":split_line[1],
                                               "d":None,
@@ -220,7 +223,9 @@ def read_asmc_output(id_dict: Optional[Dict[str, Union[str, int, None]]],
                                               "ref_seq":None,
                                               "ref_d1":None,
                                               "ref_d2":None,
-                                              "ref_pid":None}
+                                              "ref_pid":None,
+                                              'g1':None,
+                                              'g2':split_line[-1]}
     
     return id_dict
 
@@ -343,7 +348,7 @@ def build_active_site_checking_file(id_dict: Dict[str, Union[str, int, None]],
     """
     
     # Headers
-    text = "ID\tF1\tF2\tD\tREF_ID\tREF_SEQ\tD_REF_1\tD_REF_2\tNEAR_REF\n"
+    text = "ID\tG1\tF1\tG2\tF2\tD\tREF_ID\tPERC_ID\tREF_SEQ\tD_REF_1\tD_REF_2\tNEAR_REF\n"
     for key in id_dict:
         if key in ref_set:
             continue
@@ -354,9 +359,13 @@ def build_active_site_checking_file(id_dict: Dict[str, Union[str, int, None]],
         seq_ref = id_dict[key]["ref_seq"]
         d1 = id_dict[key]["ref_d1"]
         d2 = id_dict[key]["ref_d2"]
+        g1 = id_dict[key]["g1"]
+        g2 = id_dict[key]["g2"]
+        ref_pid = id_dict[key]["ref_pid"]
         
         # Add dictionnary items
-        text += f"{key}\t{seq1}\t{seq2}\t{d}\t{ref}\t{seq_ref}\t{d1}\t{d2}\t"
+        text += f"{key}\t{g1}\t{seq1}\t{g2}\t{seq2}\t{d}\t{ref}\t{ref_pid}\t"
+        text += f"{seq_ref}\t{d1}\t{d2}\t"
         
         # Last column
         if d1 is not None and d2 is not None:
