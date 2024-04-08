@@ -484,7 +484,7 @@ def read_alignment(file: Path) -> Tuple[Dict[str, str], Dict[str, str]]:
                     else:
                         sequences[seq_id] += line.strip()
                 except ZeroDivisionError:
-                    del removed[seq_id]
+                    del sequences[seq_id]
                     removed[seq_id] = "empty line"
 
     return sequences, removed
