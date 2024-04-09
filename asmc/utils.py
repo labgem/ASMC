@@ -370,22 +370,26 @@ def build_active_site_checking_file(id_dict: Dict[str, Union[str, int, None]],
         # Last column
         if d1 is not None and d2 is not None:
             if d1 < d2:
-                text += "f1\n"
+                text += "f1"
             elif d1 > d2:
-                text += "f2\n"
+                text += "f2"
             else:
-                text += "both\n"
+                text += "both"
         elif ref is None:
-            text += "None\n"
+            text += "None"
         elif d1 is None and d2 is None:
             if seq1 is None:
-                text += "f2\n"
+                text += "f2"
             elif seq2 is None:
-                text += "f1\n"
+                text += "f1"
+            else:
+                text += "None"
         elif d1 is None:
-            text += "f2\n"
+            text += "f2"
         elif d2 is None:
-            text += "f1\n"
+            text += "f1"
+            
+        text += "\n"
         
     return text
     
