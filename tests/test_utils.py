@@ -161,6 +161,8 @@ class TestCompareActiveSite:
         assert d["idC"]["ref_id"] == "idE"
         assert d["idC"]["ref_pid"] == '28.7'
         assert d["idF"]["ref_id"] is None
+        assert d["idA"]["g1"] == "5"
+        assert d["idA"]["g2"] == "5"
     
     def test_LD_two_rows(self):
     
@@ -196,11 +198,11 @@ class TestCompareActiveSite:
         t = utils.build_active_site_checking_file(d, s)
         t = t.split("\n")
         
-        assert t[0] == "ID\tF1\tF2\tD\tREF_ID\tREF_SEQ\tD_REF_1\tD_REF_2\tNEAR_REF"
-        assert t[1] == "idB\tQWERTY\tQWERTY\t0\tidA\tAZERTY\t2\t2\tboth"
-        assert t[2] == "idC\tPEPONV\tPEPOFR\t2\tidE\tPEPOKR\t2\t1\tf2"
-        assert t[3] == "idD\tPENOVR\tNone\tNone\tidE\tPEPOKR\t2\tNone\tf1"
-        assert t[4] == "idF\tNone\tQWERTZ\tNone\tNone\tNone\tNone\tNone\tNone"
+        assert t[0] == "ID\tG1\tF1\tG2\tF2\tD\tREF_ID\tPERC_ID\tREF_SEQ\tD_REF_1\tD_REF_2\tNEAR_REF"
+        assert t[1] == "idB\t5\tQWERTY\t5\tQWERTY\t0\tidA\t50.0\tAZERTY\t2\t2\tboth"
+        assert t[2] == "idC\t6\tPEPONV\t6\tPEPOFR\t2\tidE\t28.7\tPEPOKR\t2\t1\tf2"
+        assert t[3] == "idD\t6\tPENOVR\tNone\tNone\tNone\tidE\t31.4\tPEPOKR\t2\tNone\tf1"
+        assert t[4] == "idF\tNone\tNone\t5\tQWERTZ\tNone\tNone\tNone\tNone\tNone\tNone\tNone"
 
 class TestExtractAA:
     
