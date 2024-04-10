@@ -3,6 +3,7 @@ import sys
 import yaml
 import argparse
 import subprocess
+import multiprocessing
 import logging
 import datetime
 import numpy as np
@@ -251,9 +252,8 @@ def pairwise_alignment(yml, models_file, outdir, threads, log):
         
     if not superposition_dir.exists():
         superposition_dir.mkdir()
-    
-    pair_file = Path.joinpath(outdir, "pair_list.txt")
-    text = ""
+
+    job_list = []
     
     # Building the file to be used with gnu parallel
     with open(models_file, "r") as f:
@@ -284,34 +284,43 @@ def pairwise_alignment(yml, models_file, outdir, threads, log):
 
             output = Path.joinpath(pairwise_dir, f"{model}_-{ref}.fasta")
             super_name = Path.joinpath(superposition_dir, f"{model}")
-            text += f"{split_line[1]} {split_line[0]} -o {super_name} -outfmt 1"
-            text += f" > {output}\n"
+            job = f"{split_line[1]} {split_line[0]} -o {super_name} -outfmt 1"
+            job += f" > {output}"
+            
+            job_list.append((job, USALIGN, log))
     
-    pair_file.write_text(text)
-    
-    # Run the parallel command
-    command = f"parallel -j {threads} ::: {USALIGN} :::: {pair_file}"
-    if log is None:
-        ret = subprocess.run(command.split())
-    else:
-        with open(log, "a") as f_log:
-            ret = subprocess.run(command.split(), stdout=f_log,
-                                 stderr=subprocess.STDOUT)
-    pair_file.unlink()
+    # Run USalign 
+    pool = multiprocessing.Pool(processes=threads)
+    pool.starmap(run_usalign, job_list)
+    pool.close()
+    pool.join()
     
     # Remove pymol scripts
-    if ret.returncode == 0 or ret.returncode == 101:
-        all_pml = [f for f in superposition_dir.iterdir() if f.match("*.pml")]
-        for pml in all_pml:
-            pml.unlink()
-    
-    else:
-        logging.error(f"{ret.returncode}")
-        logging.error("An error has occured during USalign process:\n"
-                      f"{ret.stderr.decode('utf-8')}")
-        sys.exit(1)
+    all_pml = [f for f in superposition_dir.iterdir() if f.match("*.pml")]
+    for pml in all_pml:
+        pml.unlink()
         
     return pairwise_dir
+
+def run_usalign(job, usalign, log):
+    """Run USalign between a target and his best reference
+
+    Args:
+        job (str): The arguments and paramaters for the USalign cli
+        usalign (str): The path or binary name of USalign
+        log (Path): Path of log file 
+    """
+    
+    job = [usalign] + job.split()
+    output = job[-1]
+    job = job[:-2]
+    
+    if log is not None:
+        with open(output, "w") as fout, open(log, "a") as flog:
+            subprocess.run(job, stdout=fout, stderr=flog, check=True)
+    else:
+        with open(output, "w") as fout:
+            subprocess.run(job, stdout=fout, check=True)
 
 ##########
 ## MAIN ##
