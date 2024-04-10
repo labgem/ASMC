@@ -181,10 +181,10 @@ def get_identity(ref_seq: Dict[str, str], target: str) -> Tuple[str, float]:
     
     return ref_max, perc_id_max
 
-def read_asmc_output(id_dict: Optional[Dict[str, Union[str, int, None]]],
-                     file: Path,
-                     empty=True) -> Dict[str, Union[str, int, None]]:
-    """Read the ASMC groups.tsv
+def build_comparison_data(id_dict: Optional[Dict[str, Union[str, int, None]]],
+                          file: Path, 
+                          empty=True) -> Dict[str, Union[str, int, None]]:
+    """Read the ASMC groups.tsv and load information in a dictionnary
 
     Args:
         id_dict (dict): An empty dictionnary or contaning sub dict as value of
@@ -230,10 +230,10 @@ def read_asmc_output(id_dict: Optional[Dict[str, Union[str, int, None]]],
     return id_dict
 
 
-def read_identity_target_ref(id_dict:Dict[str, Union[str, int, None]],
-                             file:Path) -> Tuple[Dict[str, Union[str, int, None]],
-                                                 Set[str]]:
-    """Reads the identity_target_ref.tsv file
+def add_ref_data_to_comparison_data(id_dict:Dict[str, Union[str, int, None]],
+                                    file:Path) -> Tuple[Dict[str, Union[str, int, None]], Set[str]]:
+    """Reads the identity_target_ref.tsv file and add information to a 
+    comparison data
 
     Args:
         id_dict (dict): Dict with sub dict as value and seqID as key

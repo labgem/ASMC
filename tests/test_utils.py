@@ -112,10 +112,10 @@ class TestCompareActiveSite:
         
         yield (f1, f2)
         
-    def test_read_asmc_output(self, groups_tsv):
+    def test_build_comparison_data(self, groups_tsv):
         
         f1 = groups_tsv[0]
-        d = utils.read_asmc_output({}, f1)
+        d = utils.build_comparison_data({}, f1)
         assert d["idA"]["f1"] == "AZERTY"
         assert d["idA"]["f2"] is None
         assert d["idA"]["d"] is None
@@ -126,7 +126,7 @@ class TestCompareActiveSite:
         assert d["idA"]["ref_pid"] is None
     
         f2 = groups_tsv[1]
-        d = utils.read_asmc_output(d, f2, empty=False)
+        d = utils.build_comparison_data(d, f2, empty=False)
 
         assert d["idC"]["f1"] == "PEPONV"
         assert d["idC"]["f2"] == "PEPOFR"
@@ -146,14 +146,14 @@ class TestCompareActiveSite:
     
         yield f
     
-    def test_read_identity_target_ref(self, groups_tsv, identity_data):
+    def test_add_ref_data_to_comparison_data(self, groups_tsv, identity_data):
         
         f1 = groups_tsv[0]
-        d = utils.read_asmc_output({}, f1)
+        d = utils.build_comparison_data({}, f1)
         f2 = groups_tsv[1]
-        d = utils.read_asmc_output(d, f2, empty=False)
+        d = utils.build_comparison_data(d, f2, empty=False)
         
-        d, s = utils.read_identity_target_ref(d, identity_data)
+        d, s = utils.add_ref_data_to_comparison_data(d, identity_data)
         
         assert s == {"idA", "idE"}
         assert d["idB"]["ref_id"] == "idA"
@@ -171,11 +171,11 @@ class TestCompareActiveSite:
     def test_compute_levenshtein(self, groups_tsv, identity_data):
         
         f1 = groups_tsv[0]
-        d = utils.read_asmc_output({}, f1)
+        d = utils.build_comparison_data({}, f1)
         f2 = groups_tsv[1]
-        d = utils.read_asmc_output(d, f2, empty=False)
+        d = utils.build_comparison_data(d, f2, empty=False)
         
-        d, s = utils.read_identity_target_ref(d, identity_data)
+        d, s = utils.add_ref_data_to_comparison_data(d, identity_data)
         
         d = utils.compute_levenshtein(d)
         
@@ -187,11 +187,11 @@ class TestCompareActiveSite:
     def test_build_active_site_checking_file(self, groups_tsv, identity_data):
         
         f1 = groups_tsv[0]
-        d = utils.read_asmc_output({}, f1)
+        d = utils.build_comparison_data({}, f1)
         f2 = groups_tsv[1]
-        d = utils.read_asmc_output(d, f2, empty=False)
+        d = utils.build_comparison_data(d, f2, empty=False)
         
-        d, s = utils.read_identity_target_ref(d, identity_data)
+        d, s = utils.add_ref_data_to_comparison_data(d, identity_data)
         
         d = utils.compute_levenshtein(d)
         
