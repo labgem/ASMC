@@ -290,10 +290,8 @@ def pairwise_alignment(yml, models_file, outdir, threads, log):
             job_list.append((job, USALIGN, log))
     
     # Run USalign 
-    pool = multiprocessing.Pool(processes=threads)
-    pool.starmap(run_usalign, job_list)
-    pool.close()
-    pool.join()
+    with multiprocessing.Pool(processes=threads) as pool:
+        pool.starmap(run_usalign, job_list)
     
     # Remove pymol scripts
     all_pml = [f for f in superposition_dir.iterdir() if f.match("*.pml")]
