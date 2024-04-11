@@ -59,7 +59,8 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
     parser.add_argument("-a","--ali", type=str, metavar="",
-                        help="alignment between references and target")
+                        help="path of alignment between references and target +"
+                        " ref name(s), e.g: /home/data/target.ali+refA+refB+refC")
     parser.add_argument("-o", "--outdir", type=str, metavar="", default="./",
                         help="output directory [default: ./]")
     
