@@ -28,9 +28,9 @@ if not file_id.exists():
     print(f"{__file__}: error: argument -id '{file_id}' doesn't exist")
     sys.exit(1)
         
-id_dict = utils.read_asmc_output({}, file1)
-id_dict = utils.read_asmc_output(id_dict, file2, empty=False)
-id_dict, ref_set = utils.read_identity_target_ref(id_dict, file_id)
+id_dict = utils.build_comparison_data({}, file1)
+id_dict = utils.build_comparison_data(id_dict, file2, empty=False)
+id_dict, ref_set = utils.add_ref_data_to_comparison_data(id_dict, file_id)
 id_dict = utils.compute_levenshtein(id_dict)
 text = utils.build_active_site_checking_file(id_dict, ref_set)
 output = Path.cwd().absolute() / "active_site_checking.tsv"
