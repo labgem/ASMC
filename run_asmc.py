@@ -198,7 +198,7 @@ def modeling(job_file, outdir, threads):
     
     job_list = []
     with open(job_file, "r") as f:
-        for line in enumerate(f):
+        for line in f:
             job_list.append(f"python3 {src_path} -a {line.strip()} -o {model_dir}")
     
     with multiprocessing.Pool(processes=threads) as pool:
