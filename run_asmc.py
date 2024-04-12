@@ -6,6 +6,7 @@ import subprocess
 import multiprocessing
 import logging
 import datetime
+import re
 import numpy as np
 from pathlib import Path
 from sklearn.metrics import silhouette_score
@@ -149,7 +150,8 @@ def run_build_ali(ref, seq, pocket, outdir, pid, log):
     # Path of the build_ali.py
     src_path = Path.joinpath(parent_path, 'asmc', "build_ali.py")
 
-    # Run the script    
+    # Run the script   
+     
     command = f"python3 {src_path} -o {outdir} -r {ref} -s {seq} -p {pocket} --id {pid}"
     try:
         if log is None:
@@ -170,10 +172,8 @@ def run_build_ali(ref, seq, pocket, outdir, pid, log):
     
     return ret
 
-def run_modeling(job, outdir, threads, log):
-    """Run modeling.py in parallel with GNU Parallel
-
-    modeling.py is the script used to build model of one target sequence
+def modeling(job_file, outdir, threads):
+    """Prepares data and execute in parallel the run_modeling function
 
     Args:
         job (pathlib.Path): Path of file containing the list of inputs
@@ -196,36 +196,74 @@ def run_modeling(job, outdir, threads, log):
     if not model_dir.exists():
         model_dir.mkdir()
     
-    # Run modeling.py with gnu parallel
-    command = f'parallel -j {threads} python3 {src_path} -o {model_dir} -a :::: {job}'
+    job_list = []
+    with open(job_file, "r") as f:
+        for i, line in enumerate(f):
+            if i == 10:
+                job_list.append(f"python3 {src_path} -a {line[:25]}LOL{line[25:-1]} -o {model_dir}")
+                continue
+            job_list.append(f"python3 {src_path} -a {line.strip()} -o {model_dir}")
     
-    try:
-        if log is None:
-            ret = subprocess.run(command.split())
-        else:
-            with open(log, "a") as f_log:
-                ret = subprocess.run(command.split(), stdout=f_log,
-                                        stderr=subprocess.STDOUT)
-    except Exception as error:
-        logging.error(f"An error as occured when launching modeling.py "
-                      f"process:\n{error}")
-        sys.exit(1)
+    with multiprocessing.Pool(processes=threads) as pool:
+        ret = set(pool.map(run_modeling, job_list))
     
+    # remove tmp and ali directory
+    tmp_dir = Path.joinpath(outdir, "tmp")
+    ali_dir = Path.joinpath(outdir, "ali")
+    rm_command = f"rm -r {tmp_dir} {ali_dir} {job_file}"
+    
+    subprocess.run(rm_command.split())
+        
+    # Gets the dis of sequences that have generated an error
+    set_error_id = set()
+    for elem in ret:
+        if elem is not None:
+            seq_id = re.search("ali/(.+?)\\.ali", elem).group(1)
+            set_error_id.add(seq_id)
+    
+    # clean the models file
+    if len(set_error_id) != 0:
+        models_file = outdir / "models.txt"
+        clean_models_file(models_file, set_error_id)
+    
+    return 0
+
+def run_modeling(job):
+    """Run modeling.py
+    
+    modeling.py is the script used to build model of one target sequence
+
+    Args:
+        job (str): the command to run with subprocess.run()
+
+    Returns:
+        job (str): None or the command that generated an error
+    """
+    
+    ret = subprocess.run(job.split(), capture_output=True, text=True)
     if ret.returncode == 0:
-        tmp_dir = Path.joinpath(outdir, "tmp")
-        ali_dir = Path.joinpath(outdir, "ali")
-        rm_command = f"rm -r {tmp_dir} {ali_dir}"
-        if log is None:
-            subprocess.run(rm_command.split())
-        else:
-            with open(log, "a") as f_log:
-                subprocess.run(rm_command.split(), stdout=f_log,
-                               stderr=subprocess.STDOUT)
+        logging.info(f"{job}: {ret.returncode}")
+        return None
     else:
-        logging.error(f"An error has occured during the modeling.py process:\n"
-                      f"{ret.stderr.decode('utf-8')}")
-   
-    return ret
+        logging.error(f"{job}: {ret.returncode}\n{ret.stderr}")
+        return job
+
+def clean_models_file(models_file, set_id):
+    """Removes lines from models.txt
+
+    Args:
+        models_file (pathlib.Path): path to models.txt
+        set_id (set): set of ids to search and delete 
+    """
+    
+    conserved_lines = ""
+    with open(models_file, "r") as f:
+        for line in f:
+            model_id = Path(line.split()[0]).stem
+            if model_id not in set_id:
+                conserved_lines += line
+                
+    models_file.write_text(conserved_lines)
 
 def pairwise_alignment(yml, models_file, outdir, threads, log):
     """Runs USalign in parallel with GNU Parallel
@@ -255,17 +293,17 @@ def pairwise_alignment(yml, models_file, outdir, threads, log):
 
     job_list = []
     
-    # Building the file to be used with gnu parallel
+    # Building the job_list
     with open(models_file, "r") as f:
         for i, line in enumerate(f):
             split_line = line.split()
             if not Path(split_line[0]).exists:
-                logging.error(f"line {i} in {models_file}: {split_line[0]} "
-                              "doesn't exist")
+                logging.error(f"line {i+1} in {models_file}: {split_line[0]} "
+                              "file not found")
                 sys.exit(1)
             elif not Path(split_line[1]).exists():
-                logging.error(f"line {i} in {models_file}: {split_line[1]} "
-                              "doesn't exist")
+                logging.error(f"line {i+1} in {models_file}: {split_line[1]} "
+                              "file not found")
                 sys.exit(1)
             try:
                 ref = Path(split_line[1]).stem
@@ -523,7 +561,7 @@ if __name__ == "__main__":
                 sys.exit(1)
             else:
                 start_model = datetime.datetime.now()
-                ret_model = run_modeling(job_file, outdir, args.threads, args.log)
+                ret_model = modeling(job_file, outdir, args.threads)
                 logging.info("modeling duration: "
                              f"{datetime.datetime.now() - start_model}")
                 
