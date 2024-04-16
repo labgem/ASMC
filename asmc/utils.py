@@ -348,7 +348,7 @@ def build_active_site_checking_file(id_dict: Dict[str, Union[str, int, None]],
     """
     
     # Headers
-    text = "ID\tG1\tF1\tG2\tF2\tD\tREF_ID\tPERC_ID\tREF_SEQ\tD_REF_1\tD_REF_2\tNEAR_REF\n"
+    text = "ID\tG1\tSEQ1\tG2\tSEQ2\tDIFF\tREF_ID\tPERC_ID\tREF_SEQ\tD_REF_1\tD_REF_2\tNEAR_REF\n"
     for key in id_dict:
         if key in ref_set:
             continue
