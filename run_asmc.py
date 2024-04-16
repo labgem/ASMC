@@ -27,7 +27,7 @@ def read_yaml(args):
     │   ├── AA_distances.tsv
     │   └── config_asmc.yml
     ├── run_asmc.py
-    └── ascm
+    └── asmc
         ├── __init__.py
         ├── asmc.py
         └── ...
@@ -263,7 +263,7 @@ def clean_models_file(models_file, set_id):
     models_file.write_text(conserved_lines)
 
 def pairwise_alignment(yml, models_file, outdir, threads, log):
-    """Runs USalign in parallel with GNU Parallel
+    """Runs USalign in parallel
 
     Args:
         yml (dict): a dictionary corresponding to the contents of the yaml file
@@ -473,7 +473,7 @@ if __name__ == "__main__":
                 sys.exit(1)
         
         # Check pocket
-        if not args.pocket is None:
+        if args.pocket is not None:
             pocket_file = Path(args.pocket).absolute()
             if not pocket_file.exists():
                 logging.error(f"{pocket_file} file not found")
@@ -534,8 +534,8 @@ if __name__ == "__main__":
                       "--models is used")
         sys.exit(1)
     
-    # Check input type : sequence, models, alignment  
-    if not args.seqs is None:
+    # Check input type : sequence, models, alignment, msa  
+    if args.seqs is not None:
         seq_path = Path(args.seqs).absolute()
         if not seq_path.exists():
             logging.error(f"argument -s/--seqs '{seq_path}' file not found")
@@ -567,7 +567,7 @@ if __name__ == "__main__":
                     sys.exit(0)
     
     # check if path exist
-    if not args.models is None:
+    if args.models is not None:
         models_file = Path(args.models).absolute()
         if not models_file.exists():
             logging.error(f"argument -m/--models '{models_file}' file not found")
