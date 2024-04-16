@@ -34,4 +34,7 @@ id_dict, ref_set = utils.add_ref_data_to_comparison_data(id_dict, file_id)
 id_dict = utils.compute_levenshtein(id_dict)
 text = utils.build_active_site_checking_file(id_dict, ref_set)
 output = Path.cwd().absolute() / "active_site_checking.tsv"
+
+# Hides 3 last columns
+text = "\n".join(["\t".join(elem.split("\t")[:-3]) for elem in text.split("\n")])
 output.write_text(text)
