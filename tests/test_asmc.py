@@ -36,13 +36,18 @@ class TestPocketDetection:
         
         yield (d, ref)
     
-    def test_build_ds_sys_exit(self, data_for_pocket_detection):
+    def test_build_ds_sys_exception(self, data_for_pocket_detection):
         
         outdir = data_for_pocket_detection[0]
         ref = data_for_pocket_detection[1]
         chain = "all"
         
-        with pytest.raises(SystemExit, match="1"):
+        ref_pdb = outdir / "refA.pdb"
+        
+        error_msg = f"An error has occured while reading {ref}:\n{ref_pdb}"
+        error_msg += " file not found"
+        
+        with pytest.raises(Exception, match=error_msg):
             ds, text = asmc.build_ds(ref, outdir, chain)
     
     def test_build_ds(self, data_for_pocket_detection):
@@ -65,7 +70,10 @@ class TestPocketDetection:
     def test_extract_pocket_no_prediction(self, data_for_pocket_detection):
         
         outdir = data_for_pocket_detection[0]
-        with pytest.raises(SystemExit, match="1"):
+        
+        error_msg = "No predictions file after running p2rank"
+        
+        with pytest.raises(RuntimeError, match=error_msg):
             asmc.extract_pocket(outdir)
             
     def test_extract_pocket(self, data_for_pocket_detection):
@@ -87,14 +95,17 @@ class TestPocketDetection:
         res_dict = asmc.extract_pocket(outdir)
         assert res_dict == {'C':[4,5,6]}
         
-    def test_build_pocket_text_sys_exit(self, data_for_pocket_detection):
+    def test_build_pocket_text_exception(self, data_for_pocket_detection):
         
         outdir = data_for_pocket_detection[0]
         ref = data_for_pocket_detection[1]
         ref_dict = {}
         query_chain = "Z"
         
-        with pytest.raises(SystemExit, match="1"):
+        error_msg = "None results for p2rank, this may be due to an incorrect "
+        error_msg += f"query chain value : {query_chain}"
+        
+        with pytest.raises(Exception, match=error_msg):
             asmc.build_pocket_text(ref, ref_dict, outdir, query_chain)
             
     def test_build_pocket_text(self, data_for_pocket_detection):
@@ -169,14 +180,19 @@ class TestStructuralAlignment:
         
         yield d, pairwise_dir
         
-    def test_renumber_residues_sys_exit(self, data_for_structural_aln):
+    def test_renumber_residues_sys_exception(self, data_for_structural_aln):
             
         d = data_for_structural_aln[0]
         refA_pdb = d / "refA.pdb"
             
         ref_list = [refA_pdb, "C", ["1","2","10"]]
-            
-        with pytest.raises(SystemExit, match="1"):
+        
+        error_msg = "An error has occured when renumbering the residues "
+        error_msg += "of reference. This may caused by a residue number "
+        error_msg += "indicated in the pocket file not found in the "
+        error_msg += f"'{refA_pdb}' or a duplicated residue number"
+        
+        with pytest.raises(asmc.RenumberResiduesError, match=error_msg):
             renum = asmc.renumber_residues(ref_list)
             
     def test_renumber_residues(self, data_for_structural_aln):
@@ -379,19 +395,19 @@ class TestClustering:
         scoring_dict = asmc.read_matrix(matrix)
         
         testA = asmc.pairwise_score(scoring_dict, "ARN", "ADN", [])
-        assert testA == 16
+        assert testA == (16, '')
         
         testB = asmc.pairwise_score(scoring_dict, "CQFD", "CQFD", [])
-        assert testB == 0
+        assert testB == (0, '')
         
         testC = asmc.pairwise_score(scoring_dict, "WE-K", "WXVS", [])
-        assert testC == 50
+        assert testC == (50, '')
         
         testD = asmc.pairwise_score(scoring_dict, "YML", "-GT", [1,3])
-        assert testD == 142
+        assert testD == (142, '')
         
         testE = asmc.pairwise_score(scoring_dict, "A", "Z", [])
-        assert testE == 20
+        assert testE == (20, {'Z'})
         
     def test_dissimilarity(self, data_for_clustering):
         
@@ -402,12 +418,13 @@ class TestClustering:
         scoring_dict = asmc.read_matrix(matrix)
         seq, removed = asmc.read_alignment(active_site_aln)
         
-        key_list, data = asmc.dissimilarity(seq, scoring_dict, [])
+        key_list, data, warn_set = asmc.dissimilarity(seq, scoring_dict, [])
     
         assert key_list == ['refA', 'idC', 'idD', 'refB', 'idE', 'idF', 'idG']
         assert data.shape == (7,7)
         assert data.min() == 0.0
         assert data.max() == 1.0
+        assert warn_set == set()
         
     def test_dbscan_clustering(self, data_for_clustering):
         
@@ -418,7 +435,7 @@ class TestClustering:
         scoring_dict = asmc.read_matrix(matrix)
         seq, removed = asmc.read_alignment(active_site_aln)
         
-        key_list, data = asmc.dissimilarity(seq, scoring_dict, [])
+        key_list, data, warn_set = asmc.dissimilarity(seq, scoring_dict, [])
         
         labels = asmc.dbscan_clustering(data, 0.4, 1, 1)
         assert labels.shape == (7,)
@@ -433,7 +450,7 @@ class TestClustering:
         scoring_dict = asmc.read_matrix(matrix)
         seq, removed = asmc.read_alignment(active_site_aln)
         
-        key_list, data = asmc.dissimilarity(seq, scoring_dict, [])
+        key_list, data, warn_set = asmc.dissimilarity(seq, scoring_dict, [])
         
         labels = asmc.dbscan_clustering(data, 0.4, 1, 1)
         
