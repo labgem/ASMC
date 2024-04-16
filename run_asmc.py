@@ -70,30 +70,6 @@ def read_yaml(args):
             if ret.returncode != 0:
                 logging.error(f"{ret.stderr.decode('utf-8')}")
                 sys.exit(1)
-        
-        elif key == "weblogo":
-            command = f"{yml[key]} --version"
-            try:
-                ret = subprocess.run(command.split(), capture_output=True)
-            except Exception as error:
-                logging.error(f"An error has occured with weblogo:\n{error}")
-                sys.exit(1)
-                
-            if ret.returncode != 0:
-                logging.error(f"{ret.stderr.decode('utf-8')}")
-                sys.exit(1)
-                
-        elif key == "java" and args.ref is not None and args.pocket is None:
-            command = f"{yml[key]} --version"
-            try:
-                ret = subprocess.run(command.split(), capture_output=True)
-            except Exception as error:
-                logging.error(f"An error has occured with java:\n{error}")
-                sys.exit(1)
-                
-            if ret.returncode != 0:
-                logging.error(f"{ret.stderr.decode('utf-8')}")
-                sys.exit(1)
     
     return yml
 
