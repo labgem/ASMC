@@ -7,6 +7,7 @@ import multiprocessing
 import logging
 import datetime
 import re
+import shutil
 import numpy as np
 from pathlib import Path
 from sklearn.metrics import silhouette_score
@@ -183,9 +184,10 @@ def modeling(job_file, outdir, threads):
     # remove tmp and ali directory
     tmp_dir = Path.joinpath(outdir, "tmp")
     ali_dir = Path.joinpath(outdir, "ali")
-    rm_command = f"rm -r {tmp_dir} {ali_dir} {job_file}"
     
-    subprocess.run(rm_command.split())
+    job_file.unlink()
+    shutil.rmtree(tmp_dir)
+    shutil.rmtree(ali_dir)
         
     # Gets the dis of sequences that have generated an error
     set_error_id = set()
