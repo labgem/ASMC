@@ -406,7 +406,7 @@ if __name__ == "__main__":
                             " them with commas, e.g: 1,6,12")
     weblogo_opt = parser.add_argument_group("Weblogo options")
     weblogo_opt.add_argument("--prefix", type=str, metavar="", default="G",
-                             help="prefix for logo title before the cluster"
+                             help="prefix for logo title before the cluster id"
                              " [default: G]")
     weblogo_opt.add_argument("--format", type=str, metavar="", default="png",
                              choices=["eps", "png"],
