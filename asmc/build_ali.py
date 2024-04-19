@@ -203,7 +203,7 @@ if __name__ == "__main__":
         aln = Build_ref_target_ali(fasta, all_ref, pocekt_file, ali_dir,
                                    PID)
         
-        identity_file = Path.joinpath(outdir, "identity_targets_ref.tsv")
+        identity_file = Path.joinpath(outdir, "identity_targets_refs.tsv")
         if not identity_file.exists():
             identity_file.write_text(f"{fasta.stem}\t{Path(aln[2]).stem}\t{aln[1]:.2f}\t{PID:.2f}\n")
         else:

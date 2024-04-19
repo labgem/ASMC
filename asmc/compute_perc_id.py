@@ -51,7 +51,7 @@ for i, t in enumerate(targets_seq):
     text += f"{t}\t{ref_max}\t{perc_id_max:.2f}\n"
     print(f"{i+1}/{len(targets_seq)}", end="\r")
     
-output = Path.joinpath(Path.cwd().absolute(), "identity_target_ref.tsv")
+output = Path.joinpath(Path.cwd().absolute(), "identity_targets_refs.tsv")
 output.write_text(text)
 print(end="\x1b[2K")
 print("done")
