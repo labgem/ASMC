@@ -60,7 +60,7 @@ def read_yaml(args):
             if not Path(yml[key]).exists():
                 logging.error(f"{yml[key]} doesn't exist")
         
-        elif key == "usalign" and (args.msa is None and args.active_site is None):
+        elif key == "usalign" and (args.msa is None and args.active_sites is None):
             command = f"{yml[key]} -h"
             try:
                 ret = subprocess.run(command.split(), capture_output=True)
@@ -351,7 +351,7 @@ if __name__ == "__main__":
                                                     "alignment", "clustering",
                                                     "logo"],
                         default="logo",
-                        help="indicates at which stage to stop")
+                        help="indicates at which step to stop")
     input_opt = parser.add_argument_group("References Structures options")
     input_opt.add_argument("-r","--ref", type=str, metavar="",
                         help="file containing paths to all references")
@@ -367,22 +367,21 @@ if __name__ == "__main__":
                                         "If --seqs is given, homology modeling"
                                         " is performed. If --models is given, "
                                         "homology modeling is not performed "
-                                        "and if --actice-site is given just "
-                                        "the clustering is performed")
+                                        "and if --active-sites or --msa is given"
+                                        " just the clustering is performed")
     targts_opt_ex = targts_opt.add_mutually_exclusive_group(required=True)
 
     targts_opt_ex.add_argument("-s","--seqs", type=str, metavar="",
-                            help="multi fasta file or directory containing each"
-                            " single fasta file")
+                            help="multi fasta file")
     targts_opt_ex.add_argument("-m","--models", type=str, metavar="",
                             help="file containing paths to all models and for "
                             "each model, his reference")
     targts_opt_ex.add_argument("-M","--msa", type=str, metavar="",
                             help="file indicating active"+
                             " site positions for each references, identity_"
-                            "target_ref path and the path of an MSA")
-    targts_opt_ex.add_argument("-a","--active-site", type=str, metavar="",
-                               help="active site alignment in fasta format"
+                            "targets_refs path and the path of an MSA")
+    targts_opt_ex.add_argument("-a","--active-sites", type=str, metavar="",
+                               help="active sites alignment in fasta format"
                                ", can be used to create subgroup")
     targts_opt.add_argument("--id", type=float, metavar="", default=30.0,
                             help="percent identity cutoff between target and " 
@@ -391,9 +390,9 @@ if __name__ == "__main__":
     dbscan_opt = parser.add_argument_group("Clustering options")
     dbscan_opt.add_argument("-e", "--eps", type=str, metavar="", default="auto",
                             help="maximum distance between two samples for them"
-                            " to be considered neighbors [0,1] [default: auto]")
+                            " to be considered neighbours [0,1] [default: auto]")
     dbscan_opt.add_argument("--min-samples", type=str, metavar="", default="auto",
-                            help="the number of samples in a neighborhood for "
+                            help="the number of samples in a neighbourhood for "
                             "a point to be considered as a core point "
                             "[default: auto]")
     dbscan_opt.add_argument("--test", type=int, choices=[0, 1], default=0,
@@ -556,7 +555,7 @@ if __name__ == "__main__":
         models_file = Path.joinpath(outdir, "models.txt")
     
     # No active site alignment provide
-    if args.active_site is None:
+    if args.active_sites is None:
         
         # No MSA provided => Run Structural Alignment
         if args.msa is None:
@@ -591,14 +590,14 @@ if __name__ == "__main__":
                 except FileNotFoundError as error:
                     logging.error(error)
                 multiple_alignment = Path.joinpath(outdir,
-                                                   "active_site_alignment.fasta")
+                                                   "active_sites_alignment.fasta")
                 multiple_alignment.write_text(text)
             else:
                 logging.error(f"argument -M/--msa '{args.msa}' file not found")
 
     # An active site alignment is provided
     else:
-        multiple_alignment = Path(args.active_site)
+        multiple_alignment = Path(args.active_sites)
     
     # Stop after alignment
     if args.end == "alignment":
