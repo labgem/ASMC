@@ -784,7 +784,7 @@ def merge_logo(outdir: Path, n: int, prefix: str, out_format: str) -> None:
         img.paste(logo, top_left_coord)
     
     output = Path.joinpath(outdir,
-                           f"Groups_logo.{out_format}")
+                           f"groups_logo.{out_format}")
     
     img.save(output)
     
