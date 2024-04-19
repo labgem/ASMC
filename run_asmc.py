@@ -404,7 +404,7 @@ if __name__ == "__main__":
                             ", positions are numbered from 1 to the total number"
                             " of positions. To give several positions, separate"
                             " them with commas, e.g: 1,6,12")
-    weblogo_opt = parser.add_argument_group("Weblogo options")
+    weblogo_opt = parser.add_argument_group("Sequence logo options")
     weblogo_opt.add_argument("--prefix", type=str, metavar="", default="G",
                              help="prefix for logo title before the cluster id"
                              " [default: G]")
