@@ -13,7 +13,7 @@ def modeling(aln, outdir):
     """Build model
 
     Args:
-        aln (str): String containing the path to the alignmentand the reference name
+        aln (str): String containing the path to the alignment and the reference name
         outdir (pathlib.Path): Path to the output directory 
 
     Returns:

@@ -13,14 +13,14 @@ parser.add_argument("-a", "--aa-type", type=str, metavar="",
                     "either 1-letter amino acid, 'aromatic', 'acidic', 'basic'"
                     ", 'polar' or 'hydrophobic")
 parser.add_argument("-g", "--group", type=int, metavar="",
-                    help="group id, if not used search in all groups")
+                    help="group id, if not used, search in all groups")
 
 args = parser.parse_args()
 
 tsv_file = Path(args.file)
-# Check if the tsv file exist
+# Check if the tsv file exists
 if not tsv_file.exists():
-    print(f"error: argument -f/--file '{tsv_file}' doesn't exists")
+    print(f"error: argument -f/--file: '{tsv_file}' not found")
     sys.exit(1)
 
 try:  
