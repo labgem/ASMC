@@ -43,9 +43,9 @@ def read_yaml(args):
     
     main_path = Path(__file__).absolute()
     parent_path = main_path.parent
-    ressources_path = Path.joinpath(parent_path, "ressources")
+    resources_path = Path.joinpath(parent_path, "resources")
     
-    config_path = Path.joinpath(ressources_path, "config_asmc.yml")
+    config_path = Path.joinpath(resources_path, "config_asmc.yml")
 
     if not Path.is_file(config_path):
         logging.error(f"not found the configuration file: {config_path}")
