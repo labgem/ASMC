@@ -23,11 +23,19 @@ External dependencies:
 
 ### Download
 
-Download the latest GitHub release to obtained the code: [https://github.com/labgem/ASMC/releases](https://github.com/labgem/ASMC/releases)
+Download the latest GitHub release to obtain the code: [https://github.com/labgem/ASMC/releases](https://github.com/labgem/ASMC/releases)
 
-### Python dependencies
+### Python requirements
 
-You can install the python dependencies with `pip`, `conda` or `mamba` with theses command and the files given in the releases:
+- Python ≥ 3.8
+- numpy
+- scikit-learn
+- pyyaml
+- pillow
+- biopython ≥ 1.81
+- weblogo
+
+You can install the python dependencies with `pip`, `conda` or `mamba` with the following commands and the files given in the releases:
 
 **pip**
 ```
@@ -44,21 +52,32 @@ conda env create -n env_name -f env.yml
 mamba env create -n env_name -f env.yml
 ```
 
-Installation via conda and mamba includes the modeller installation, but you still need to request the licence key.
+Installation via conda and mamba includes the MODELLER installation, but you still need to request the license key.
 
-### External dependencies
+### External Software dependencies
 
-To install and configure the external dependencies, please follow the links in the requirements sections and the instructions given by their authors.
+- P2RANK - for ligand-binding pocket detection ([https://github.com/rdk/p2rank](https://github.com/rdk/p2rank))
+- MODELLER - for homology modeling ([https://salilab.org/modeller/](https://salilab.org/modeller/))
+- USalign - for structural alignment ([https://zhanggroup.org/US-align/](https://zhanggroup.org/US-align/))
 
-### Configuration
+ Please follow the links above and the instructions given by their authors.
 
-Before you can run the pipeline, you need to add a file named `config_asmc.yml` in `ASMC/ressources`. This file should contain the path to the `ASMC/ressources/AA_distances.tsv` and the path (or alias or binary name if it's in your PATH) to the p2rank and USalign executables, e.g:
+## Configuration
 
+In `ASMC/resources`, add a file exactly named `config_asmc.yml`. This file should contain 3 information:
+
+- the path to the `ASMC/resources/AA_distances.tsv`
+- the path or alias of P2RANK executable (or binary name if it's in your PATH)
+- the path or alias of USalign executable (or binary name if it's in your PATH)
+
+Example:
+```yaml
+distances: "/home/User/ASMC/resources/AA_distances.tsv"
+usalign: "USalign"
+p2rank: "prank"
 ```
-distances: "<path>/ASMC/ressources/AA_distances.tsv"
-usalign: "<path>/USalign"
-p2rank: "<path>/prank"
-```
+
+The keys should be identical to this example.
 
 ## Quick Usage
 
