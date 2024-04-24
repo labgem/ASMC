@@ -11,10 +11,10 @@ import modeller
 def multi_to_single(file, outdir):
     """Transform multi fasta file into single fasta files
 
-    Replaces potential pipes '|' and dot '.' in the sequence id to avoid file
+    Replaces potential '|', '.' and ':' in the sequence id to avoid file
     and command parsing problems.
     
-    For uniprot, we keep only the unique indentifier between the pipes.
+    For uniprot, we keep only the unique identifier between the pipes.
 
     Args:
         file (pathlib.Path): Path of the multi fasta file
@@ -125,7 +125,7 @@ def Build_ref_target_ali(fasta, ref, pocket, outdir, PID):
             pid = x
             best_ref = seq._Sequence__get_atom_file()
     
-    # condition for build model for the target
+    # condition to build model for the target
     if pid >= PID:
         models_text = f"{Path.joinpath(outdir.parent, 'models', f'{fasta.stem}.pdb')} {best_ref}\n"
         models_file = Path.joinpath(outdir.parent, "models.txt")
