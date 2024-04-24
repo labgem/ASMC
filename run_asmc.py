@@ -20,11 +20,11 @@ def read_yaml(args):
     """Read the yaml file
     
     Load the content of the yaml file and check the validity of paths.
-    The configuration should be place in a directory named ressources in the same
+    The configuration should be place in a directory named resources in the same
     location as run_asmc.py, e.g :
 
     .
-    ├── ressources
+    ├── resources
     │   ├── AA_distances.tsv
     │   └── config_asmc.yml
     ├── run_asmc.py
@@ -345,14 +345,14 @@ if __name__ == "__main__":
     parser.add_argument("-t", "--threads", type=int, metavar="", default=6,
                         help="number of cpu threads [default: 6]")
     parser.add_argument("-l", "--log", type=str, metavar="",
-                        help="log file path, if it's not provied the log are"
+                        help="log file path, if it's not provided the logs are"
                         " display in the stdout")
     parser.add_argument("--end", type=str, choices=["pocket", "modeling",
                                                     "alignment", "clustering",
                                                     "logo"],
                         default="logo",
-                        help="indicates at which step to stop")
-    input_opt = parser.add_argument_group("References Structures options")
+                        help="indicates at which step to stop [default: logo]")
+    input_opt = parser.add_argument_group("Reference Structures options")
     input_opt.add_argument("-r","--ref", type=str, metavar="",
                         help="file containing paths to all references")
     input_opt.add_argument("-p", "--pocket", type=str, metavar="",
@@ -378,8 +378,8 @@ if __name__ == "__main__":
                             "each model, his reference")
     targts_opt_ex.add_argument("-M","--msa", type=str, metavar="",
                             help="file indicating active"+
-                            " site positions for each references, identity_"
-                            "targets_refs path and the path of an MSA")
+                            " site positions for each reference, identity_"
+                            "targets_refs path and the path of a MSA")
     targts_opt_ex.add_argument("-a","--active-sites", type=str, metavar="",
                                help="active sites alignment in fasta format"
                                ", can be used to create subgroup")
@@ -397,6 +397,7 @@ if __name__ == "__main__":
                             "[default: auto]")
     dbscan_opt.add_argument("--test", type=int, choices=[0, 1], default=0,
                             help="0: use the --eps value, 1: test different "
+                            "[default: 0]"
                             "values")
     dbscan_opt.add_argument('-w','--weighted-pos', type=str, metavar="",
                             default=None,
