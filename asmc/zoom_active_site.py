@@ -27,7 +27,7 @@ def target(target):
     
     # Set the path of identity_target_ref.csv
     id_target_ref_path = Path.joinpath(working_directory,
-                                       "identity_target_ref.tsv")
+                                       "identity_targets_refs.tsv")
     
     # Get the reference name for the target
     ref_name = find_ref(target, id_target_ref_path)
@@ -79,7 +79,8 @@ def active_site(active_site_file):
     # For each residue in the reference active site
     for i, (resi, resn) in enumerate(space["ref"]):
         # Search for the target residue aligned with it
-        string_selection = f"{target_name} and br. all and name CA near_to 1.0 of {ref_active_site_name} and resi {resi} and name CA"
+        #string_selection = f"{target_name} and br. all and name CA near_to 1.0 of {ref_active_site_name} and resi {resi} and name CA"
+        string_selection = f"{target_name} and br. all near_to 1.0 of {ref_active_site_name} and resi {resi}"
         inner_space = {"res":[]}
         if i == 0:
             cmd.create(target_active_site_name, string_selection)
