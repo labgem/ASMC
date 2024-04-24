@@ -35,13 +35,13 @@ class PositionError(Exception):
         super().__init__(self.message)
 
 class AminoAcidTypeError(Exception):
-    """Execption raised for Amino Acid does not correspond to a 1-letter code or
-    a valid amino acid type
+    """Exception raised for Amino Acid which does not correspond to a 1-letter
+    code or a valid amino acid type
     
     valid amino acid type : 'aromatic', 'acidic', 'basic', 'polar', 'hydrophobic'
 
     Attribute:
-        aa (str): the amino acid string wich caused the error
+        aa (str): the amino acid string which caused the error
     """
     
     def __init__(self, aa: str) -> None:
@@ -87,14 +87,14 @@ def get_seq_from_pdb(pdb: Path) -> str:
 def read_models(models: Path) -> Dict[str, str]:
     """Reads the model file
 
-    For each model, add its id as key in a dictionnary and add as value the
+    For each model, add its id as key in a dictionary and add as value the
     sequence return by get_seq_from_pdb().
 
     Args:
         models (pathlib.Path): The file containing the model paths
 
     Returns:
-        all_seq (dict): A dictionnary with each pair of id - seq
+        all_seq (dict): A dictionary with each pair of id - seq
     """
     
     all_seq = {}
@@ -110,13 +110,13 @@ def read_models(models: Path) -> Dict[str, str]:
 def read_multi_fasta(fasta: Path) -> Dict[str, str]:
     """Reads a multi fasta file
     
-    Add in a dictionnary all pair id - sequence.
+    Add in a dictionary all pair id - sequence.
 
     Args:
         fasta (pathlib.Path): The multi fasta file
 
     Returns:
-        all_seq (dict): A dictionnary with each pair of id - seq
+        all_seq (dict): A dictionary with each pair of id - seq
     """
     
     all_seq = {}
@@ -141,11 +141,11 @@ def read_multi_fasta(fasta: Path) -> Dict[str, str]:
 def get_identity(ref_seq: Dict[str, str], target: str) -> Tuple[str, float]:
     """Get the % identity between two sequences
     
-    For each pair reference - target, build a global alignment and calculates
+    For each pair reference - target, build a global alignment and calculate
     the percentage of identity.
 
     Args:
-        ref_seq (dict): Dictionnary with ids of reference as key and their
+        ref_seq (dict): Dictionary with ids of reference as key and their
                         sequences as value
         target (str): The target sequence
 
@@ -184,13 +184,13 @@ def get_identity(ref_seq: Dict[str, str], target: str) -> Tuple[str, float]:
 def build_comparison_data(id_dict: Optional[Dict[str, Union[str, int, None]]],
                           file: Path, 
                           empty=True) -> Dict[str, Union[str, int, None]]:
-    """Read the ASMC groups.tsv and load information in a dictionnary
+    """Read the ASMC groups.tsv and load information in a dictionary
 
     Args:
-        id_dict (dict): An empty dictionnary or contaning sub dict as value of
+        id_dict (dict): An empty dictionary or containing sub dict as value of
                         seqID (key)
         file (pathlib.Path): The ASMC groups.tsv 
-        empty (bool, optional): Defaults to True.
+        empty (bool, optional): Default to True.
 
     Returns:
         id_dict (dict): The updated id_dict
@@ -232,15 +232,15 @@ def build_comparison_data(id_dict: Optional[Dict[str, Union[str, int, None]]],
 
 def add_ref_data_to_comparison_data(id_dict:Dict[str, Union[str, int, None]],
                                     file:Path) -> Tuple[Dict[str, Union[str, int, None]], Set[str]]:
-    """Reads the identity_target_ref.tsv file and add information to a 
+    """Reads the identity_targets_refs.tsv file and add information to a 
     comparison data
 
     Args:
         id_dict (dict): Dict with sub dict as value and seqID as key
-        file (pathlib.Path): The identity_target_ref.tsv
+        file (pathlib.Path): The identity_targets_refs.tsv
 
     Returns:
-        id_dict (dict): The updated id_dict,
+        id_dict (dict): The updated id_dict
         ref_set (set): Set containing the reference IDs
     """
     
@@ -261,7 +261,7 @@ def add_ref_data_to_comparison_data(id_dict:Dict[str, Union[str, int, None]],
     return id_dict, ref_set
 
 def LD_two_rows(s1: str, s2: str) -> int:
-    """Calcultes Levenshtein distance between two strings
+    """Calculates Levenshtein distance between two strings
     
     Simple implementation of Levenshtein distance based on the two rows
     algorithm.
@@ -274,7 +274,7 @@ def LD_two_rows(s1: str, s2: str) -> int:
         int: The Levenshtein/edit distance
     """
 
-    # Switch s1 and s2 for reduce the columns number    
+    # Switch s1 and s2 to reduce the columns number    
     if len(s1) > len(s2):
         s1, s2 = s2, s1
     
@@ -363,7 +363,7 @@ def build_active_site_checking_file(id_dict: Dict[str, Union[str, int, None]],
         g2 = id_dict[key]["g2"]
         ref_pid = id_dict[key]["ref_pid"]
         
-        # Add dictionnary items
+        # Add dictionary items
         text += f"{key}\t{g1}\t{seq1}\t{g2}\t{seq2}\t{d}\t{ref}\t{ref_pid}\t"
         text += f"{seq_ref}\t{d1}\t{d2}\t"
         
@@ -456,7 +456,7 @@ def extract_aa(file: Path, pos: int, aa: str, group: Optional[int]):
 
 def get_unique(group_file: Path) -> Tuple[Dict[str, Tuple[str, Set[str]]],
                                          Dict[str, Tuple[int, int, float]]]:
-    """Calculates statistics on the number of unique sequences per groups
+    """Calculates statistics on the number of unique sequences per group
 
     Args:
         group_file (Path): ASMC tsv output
@@ -465,8 +465,8 @@ def get_unique(group_file: Path) -> Tuple[Dict[str, Tuple[str, Set[str]]],
         FileFormatError: Raised if the tsv contains less than 3 columns
 
     Returns:
-        unique_seq (dict): Dict with seq as key and as value tuple containing
-        the group id and a set of sequence ids
+        unique_seq (dict): Dict with seq as key and a tuple containing
+        the group id and a set of sequence ids as values
         
         groups_stats (dict): Dict with group id as key and a tuple of int and
         float as value
