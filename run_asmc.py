@@ -80,7 +80,7 @@ def run_prank(yml, ds, outdir):
     Execute a p2rank process with the subprocess module
 
     Args:
-        yml (dict): a dictionary corresponding to the contents of the yaml file
+        yml (dict): a dictionary corresponding to the content of the yaml file
         ds (pathlib.Path): Path to the dataset file
         outdir (pathlib.Path): Path to the output directory
 
@@ -189,7 +189,7 @@ def modeling(job_file, outdir, threads):
     shutil.rmtree(tmp_dir)
     shutil.rmtree(ali_dir)
         
-    # Gets the dis of sequences that have generated an error
+    # Gets the id of sequences that have generated an error
     set_error_id = set()
     for elem in ret:
         if elem is not None:
@@ -244,19 +244,19 @@ def pairwise_alignment(yml, models_file, outdir, threads, log):
     """Runs USalign in parallel
 
     Args:
-        yml (dict): a dictionary corresponding to the contents of the yaml file
+        yml (dict): a dictionary corresponding to the content of the yaml file
         models_file (pathlib.Path): Path to the models file
         outdir (pathlib.Path): Path to the output directory
         threads (int): Number of parallel jobs
         log (pathlib.Path): Path to the log file
 
     Returns:
-        pairwise_dir (pathlib.Path): Path to the directory containing all pairwise alignment
+        pairwise_dir (pathlib.Path): Path to the directory containing all pairwise alignments
     """
     
-    # Name or path of Usalign binaries
+    # Name or path of USalign executable
     USALIGN = yml["usalign"]
-    # Usalign output directories
+    # USalign output directories
     pairwise_dir = Path.joinpath(outdir, "pairwise")
     superposition_dir = Path.joinpath(outdir, "superposition")
     
@@ -284,7 +284,7 @@ def pairwise_alignment(yml, models_file, outdir, threads, log):
                 ref = Path(split_line[1]).stem
                 model = Path(split_line[0]).stem
             except IndexError:
-                logging.error(f"'{models_file}' seems to not contains 2 paths" 
+                logging.error(f"'{models_file}' seems to not contain 2 paths" 
                               f"on each line:\n {line.strip()}")
                 sys.exit(1)
             except Exception as error:
@@ -317,8 +317,8 @@ def run_usalign(job, usalign, log):
     """Run USalign between a target and his best reference
 
     Args:
-        job (str): The arguments and paramaters for the USalign cli
-        usalign (str): The path or binary name of USalign
+        job (str): The arguments and paramaters for the USalign CLI
+        usalign (str): The path or name of USalign executable
         log (Path): Path of log file 
     """
     
@@ -531,7 +531,7 @@ if __name__ == "__main__":
             job_file = Path.joinpath(outdir, "job_file.txt")
 
             if not job_file.exists():
-                logging.error(f"An error has occurend during the preparation "
+                logging.error(f"An error has occured during the preparation "
                               "of the homology modeling")
                 sys.exit(1)
             else:
@@ -544,7 +544,7 @@ if __name__ == "__main__":
                 if args.end == "modeling":
                     sys.exit(0)
     
-    # check if path exist
+    # check if path exists
     if args.models is not None:
         models_file = Path(args.models).absolute()
         if not models_file.exists():
@@ -555,14 +555,14 @@ if __name__ == "__main__":
     else:
         models_file = Path.joinpath(outdir, "models.txt")
     
-    # No active site alignment provide
+    # No active site alignment provided
     if args.active_sites is None:
         
         # No MSA provided => Run Structural Alignment
         if args.msa is None:
             
             pair_start = datetime.datetime.now()
-            logging.info(f"Start of Structural Parwise Alignment with US-align")
+            logging.info(f"Start of Structural Pairwise Alignment with US-align")
             pairwise_dir = pairwise_alignment(yml=yml,
                                               models_file=models_file,
                                               outdir=outdir,
@@ -570,7 +570,7 @@ if __name__ == "__main__":
                                               log=args.log)
             logging.info(f"SPA elasped time: {datetime.datetime.now() - pair_start}")
             
-            logging.info("Start the built of active site multiple alignment")
+            logging.info("Start building active sites multiple alignment")
             try:
                 text = asmc.build_multiple_alignment(pairwise_dir, ref_file,
                                                      pocket_file)
@@ -585,7 +585,7 @@ if __name__ == "__main__":
         # A MSA is provided 
         else:
             if Path(args.msa).exists():
-                logging.info("Start the built of active site multiple alignment")
+                logging.info("Start building active sites multiple alignment")
                 try:
                     text = asmc.search_active_site_in_msa(Path(args.msa))
                 except FileNotFoundError as error:
@@ -641,14 +641,14 @@ if __name__ == "__main__":
     if len(warn_set) != 0:
         warn = ", ".join(warn_set)
         logging.warning(f"These characters list: {warn} isn't in the distances "
-                        "matrix, they are given the maximum score same as a gap")
+                        "matrix, maximum score is applied as for a gap")
     
     perc = np.percentile(data, [25, 50, 75])
     
     logging.info(f"q1\tmed\tq3\tmean")
     logging.info(f"{perc[0]:.3f}\t{perc[1]:.3f}\t{perc[2]:.3f}\t{data.mean():.3f}")
     
-    # If test == 1 creates a list contaning a set of eps value to be tested
+    # If test == 1, then create a list containing a set of eps values to be tested
     if args.test == 1:
         eps_list = [0.3, 0.2, 0.1, round(perc[0], 2),
                     round(perc[0] - (perc[0] * 0.1), 2),
@@ -670,14 +670,14 @@ if __name__ == "__main__":
         else:
             eps_list = [round(perc[0] - (perc[0] * 0.1), 2)]
     
-    # Selects a min_sample value based on the number of sequences     
+    # Selects a min_samples value based on the number of sequences     
     if args.min_samples == "auto":
         if len(sequences) <= 1500:
             min_samples = 5
         else:
             min_samples = 25
     
-    # Uses the value provided by the user for min_sample
+    # Uses the value provided by the user for min_samples
     else:
         try:
             min_samples = int(args.min_samples)
