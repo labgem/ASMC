@@ -73,14 +73,14 @@ Installation via conda and mamba includes the MODELLER installation, but you sti
 In `ASMC/resources`, add a file exactly named `config_asmc.yml`. This file should contain 3 information:
 
 - the path to the `ASMC/resources/AA_distances.tsv`
-- the path or alias of P2RANK executable (or binary name if it's in your PATH)
-- the path or alias of USalign executable (or binary name if it's in your PATH)
+- the path of P2RANK executable
+- the path of USalign executable
 
 Example:
 ```yaml
 distances: "/home/User/ASMC/resources/AA_distances.tsv"
-usalign: "USalign"
-p2rank: "prank"
+usalign: "/home/User/bin/USALIGN/USalign"
+p2rank: "/home/User/bin/p2rank_2.4.1/prank"
 ```
 
 The keys should be identical to this example.
@@ -88,7 +88,7 @@ The keys should be identical to this example.
 ## Quick Usage
 
 ```
-python ASMC/run_asmc.py --threads 6 -r reference_file -s multi_fasta_file
+python ASMC/run_asmc.py --log run_asmc.log --threads 6 -r reference_file -s multi_fasta_file
 ```
 
 the reference_file should contains the path to the reference(s) structure(s), e.g:
@@ -104,7 +104,7 @@ It is advisable to define the positions of interest manually, based on the liter
 It is possible to run only the pocket detection and then refine the selection yourself:
 
 ```
-python ASMC/run_asmc.py --threads 6 -r reference_file -s multi_fasta_file --end pocket
+python ASMC/run_asmc.py --log run_asmc.log --threads 6 -r reference_file -s multi_fasta_file --end pocket
 ```
 
 Then you should modified (or created) the *pocket.csv* file returned.
@@ -112,7 +112,7 @@ Then you should modified (or created) the *pocket.csv* file returned.
 Finally you can run the pipeline with this command :
 
 ```
-python ASMC/run_asmc.py --threads 6 -r reference_file -p pocket.csv -s multi_fasta_file
+python ASMC/run_asmc.py --log run_asmc.log --threads 6 -r reference_file -p pocket.csv -s multi_fasta_file
 ```
 
 For more details, see the [wiki](https://github.com/labgem/ASMC/wiki)
