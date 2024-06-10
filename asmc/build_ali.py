@@ -183,7 +183,7 @@ if __name__ == "__main__":
        outdir.mkdir()
        
     ref_file = Path(args.ref)
-    pocekt_file = Path(args.pocket)
+    pocket_file = Path(args.pocket)
     seq_path = Path(args.seq)
     if seq_path.is_dir():
         all_fasta = [f for f in seq_path.iterdir()]
@@ -200,7 +200,7 @@ if __name__ == "__main__":
         
     for i, fasta in enumerate(all_fasta):
 
-        aln = Build_ref_target_ali(fasta, all_ref, pocekt_file, ali_dir,
+        aln = Build_ref_target_ali(fasta, all_ref, pocket_file, ali_dir,
                                    PID)
         
         identity_file = Path.joinpath(outdir, "identity_targets_refs.tsv")
