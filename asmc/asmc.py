@@ -25,7 +25,7 @@ def build_ds(ref: Path, outdir: Path, chains: str) -> Tuple[Path, str]:
     """Build dataset file for p2rank
 
     Args:
-        ref (patlib.Path): Path to reference file
+        ref (pathlib.Path): Path to reference file
         outdir (pathlib.Path): Path to the output directory
         chains (str): String indicating which chain to search
 
@@ -120,7 +120,7 @@ def build_pocket_text(ref: Path, res_dict: Dict[str, List[int]], outdir: Path,
     """Build the pocket file
 
     Args:
-        ref (patlib.Path): Path to reference file
+        ref (pathlib.Path): Path to reference file
         res_dict (dict): Dict containing as key the chain and as values the
         positions
         outdir (pathlib.Path): Path to the output directory
@@ -691,7 +691,7 @@ def build_fasta(group: List[Tuple[str, str, Optional[Any]]]) -> str:
     return text
 
 def build_logo(lenght: int, fasta: Path, outdir: Path, n: int, prefix: str,
-               out_format: str) -> None:
+               out_format: str, resolution: int) -> None:
     """Build weblogo for a Group
 
     Args:
@@ -701,6 +701,7 @@ def build_logo(lenght: int, fasta: Path, outdir: Path, n: int, prefix: str,
         n (int): Cluster id
         prefix (str): Prefix for the weblogo title
         out_format (str): eps or png
+        resolution (int): image resolution
         
     Raises:
         Exception: Raised when an error has occured during the creation of the
@@ -719,7 +720,8 @@ def build_logo(lenght: int, fasta: Path, outdir: Path, n: int, prefix: str,
         options.color_scheme = weblogo.chemistry
         logo_format = weblogo.LogoFormat(data, options)
         if out_format == "png":
-            logo_bytes = weblogo.png_print_formatter(data, logo_format)
+            logo_format.resolution = resolution
+            logo_bytes = weblogo.png_formatter(data, logo_format)
             output = Path.joinpath(outdir, f"{prefix}{n}.png")
         elif out_format == "eps":
             logo_bytes = weblogo.eps_formatter(data, logo_format)
@@ -731,17 +733,14 @@ def build_logo(lenght: int, fasta: Path, outdir: Path, n: int, prefix: str,
         raise Exception("An error has occured when creating the logo of"
                         f" {prefix}{n}:\n{error}")
     
-def merge_logo(outdir: Path, n: int, prefix: str, out_format: str) -> None:
+def merge_logo(outdir: Path, prefix: str, out_format: str) -> None:
     """Merge single logo files
 
     Args:
         outdir (pathib.Path): Output directory
-        n (int): The number of groups
         prefix (str): Prefix for the weblogo title 
-        out_format (str): eps or png
+        out_format (str): png
     """
-
-    LOGO_PAD = 10
 
     IM_WIDTH = 500
     
@@ -755,36 +754,29 @@ def merge_logo(outdir: Path, n: int, prefix: str, out_format: str) -> None:
     except:
         pass
     
+    logo_list = []
     
-    if out_format == "png":
-        LOGO_WIDTH = 450
-        LOGO_HEIGHT = 175
-        im_height = n * LOGO_HEIGHT + ((n-1) * LOGO_PAD) + LOGO_PAD * 2
-    else:
-        LOGO_HEIGHT = 92*2
-        im_height = n * LOGO_HEIGHT + ((n-1) * LOGO_PAD) + LOGO_PAD * 2
+    for f in all_file:
+        logo = Image.open(f)
+        logo_list.append(logo)
+     
+    logo_size = logo_list[0].size
     
-    img = Image.new(mode='RGB', size=(IM_WIDTH, im_height), color=(255,255,255))
+    IM_WIDTH = logo_size[0]
+    IM_HEIGHT = logo_size[1] * len(logo_list)
+    
+    img = Image.new(mode="RGB", size=(IM_WIDTH, IM_HEIGHT), color=(255,255,255))
     draw = ImageDraw.Draw(img)
     
-    top_left_coord = (LOGO_PAD, LOGO_PAD)
+    top_left_coord = (0,0)
     
-    for i, f in enumerate(all_file):
-        
-        logo = Image.open(f)
-        if out_format == "png":
-            logo = logo.resize(size=(LOGO_WIDTH, LOGO_HEIGHT))
-        else:
-            logo.load(scale=2)
-        
+    for i, logo in enumerate(logo_list):
         if i != 0:
-            top_left_coord = (top_left_coord[0],
-                              top_left_coord[1] + LOGO_PAD + LOGO_HEIGHT)
-            
+            top_left_coord = (0, top_left_coord[1] + logo_size[1])
+
         img.paste(logo, top_left_coord)
-    
-    output = Path.joinpath(outdir,
-                           f"groups_logo.{out_format}")
+        
+    output = outdir / f"groups_logo.png"
     
     img.save(output)
     

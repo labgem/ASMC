@@ -111,9 +111,9 @@ def run_build_ali(ref, seq, pocket, outdir, pid, log):
     build_ali.py is the script used to prepare the modeling step.
 
     Args:
-        ref (patlib.Path): Path to reference file
-        seq (patlib.Path): Path to a multi fasta file
-        pocket (patlib.Path): Path to the pocket file
+        ref (pathlib.Path): Path to reference file
+        seq (pathlib.Path): Path to a multi fasta file
+        pocket (pathlib.Path): Path to the pocket file
         outdir (pathlib.Path): Path to the output directory
         pid (float): identity cutoff
 
@@ -413,6 +413,10 @@ if __name__ == "__main__":
                              choices=["eps", "png"],
                              help="file format for output logos, 'eps' or 'png'"
                              " [default: 'png']")
+    weblogo_opt.add_argument("--resolution", type=int, metavar="", default=300,
+                             choices=[150,300,600],
+                             help="image resolution (png only), 150, 300 or 600"
+                             " dpi [default: 300]")
     
     args = parser.parse_args()
     
@@ -759,12 +763,13 @@ if __name__ == "__main__":
             fasta.write_text(fasta_text)
             try:
                 asmc.build_logo(len(group_seq), fasta, outdir, n, args.prefix,
-                                args.format)
+                                args.format, args.resolution)
             except Exception as error:
                 logging.error(error)
         
         # Merge logos in a single file
-        asmc.merge_logo(outdir, len(unique), args.prefix, args.format)  
+        if args.format == "png":
+            asmc.merge_logo(outdir, args.prefix, args.format)  
         outdir = Path(args.outdir).absolute() 
         
     logging.info(f"Total Elapsed time: {datetime.datetime.now() -  start}")
