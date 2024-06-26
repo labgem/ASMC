@@ -8,23 +8,6 @@ ASMC combines (i) homology modeling of family members (MODELLER), (ii) ligand-bi
   <img src="images/ASMC_workflow.svg" alt="ASMC workflow" />
 </p>
 
-## Requirements
-
-Requires Python>=3.8
-
-Python dependencies:
-- numpy
-- scikit-learn
-- pyyaml
-- pillow
-- biopython>=1.81
-- weblogo
-
-External dependencies:
-- p2rank - for ligand-binding pocket detection ([https://github.com/rdk/p2rank](https://github.com/rdk/p2rank))
-- modeller - for homology modeling ([https://salilab.org/modeller/](https://salilab.org/modeller/))
-- USalign - for structural alignment ([https://zhanggroup.org/US-align/](https://zhanggroup.org/US-align/))
-
 ## Installation
 
 ### Download
@@ -34,11 +17,11 @@ Download the latest GitHub release to obtain the code: [https://github.com/labge
 ### Python requirements
 
 - Python ≥ 3.8
+- biopython ≥ 1.81
 - numpy
 - scikit-learn
 - pyyaml
 - pillow
-- biopython ≥ 1.81
 - weblogo
 
 You can install the python dependencies with `pip`, `conda` or `mamba` with the following commands and the files given in the releases:
@@ -87,32 +70,16 @@ The keys should be identical to this example.
 
 ## Quick Usage
 
+Run ASMC in a blind way (unknown active site) using a multi fasta file that should contain at least 100 sequences for clustering to be sufficiently relevant.
+
 ```
-python ASMC/run_asmc.py --log run_asmc.log --threads 6 -r reference_file -s multi_fasta_file
+python ASMC/run_asmc.py --log run_asmc.log --threads 6 -r reference_file -s sequences.fasta
 ```
 
-the reference_file should contains the path to the reference(s) structure(s), e.g:
+`reference_file` should contains the path to the reference(s) structure(s), e.g:
 ```
 <path>/RefA.pdb
 <path>/RefB.pdb
 ```
 
-## Recommanded Usage
-
-It is advisable to define the positions of interest manually, based on the literature or your own expertise.
-
-It is possible to run only the pocket detection and then refine the selection yourself:
-
-```
-python ASMC/run_asmc.py --log run_asmc.log --threads 6 -r reference_file -s multi_fasta_file --end pocket
-```
-
-Then you should modified (or created) the *pocket.csv* file returned.
-
-Finally you can run the pipeline with this command :
-
-```
-python ASMC/run_asmc.py --log run_asmc.log --threads 6 -r reference_file -p pocket.csv -s multi_fasta_file
-```
-
-For more details, see the [wiki](https://github.com/labgem/ASMC/wiki)
+NB: For more details, see the [wiki](https://github.com/labgem/ASMC/wiki/Options-and-Usages)
