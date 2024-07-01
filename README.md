@@ -5,7 +5,7 @@ ASMC combines (i) homology modeling of family members (MODELLER), (ii) ligand-bi
 <!-- ![ASMC workflow](images/ASMC_workflow.svg) -->
 <!-- center and resize the image with html syntax -->
 <p align="center">
-  <img src="images/ASMC_workflow.svg" alt="ASMC workflow" />
+  <img src="docs/ASMC_workflow.svg" alt="ASMC workflow" />
 </p>
 
 ## Installation
