@@ -417,6 +417,11 @@ if __name__ == "__main__":
                              choices=[150,300,600],
                              help="image resolution (png only), 150, 300 or 600"
                              " dpi [default: 300]")
+    weblogo_opt.add_argument("--units", type=str, metavar="", default="bits",
+                             choices=["bits", "nats", "probability", "kT",
+                                      "kJ/mol", "kcal/mol"],
+                             help="The units used for the y-axis [default: bits]"
+                             ": bits, nats, probability, kT, kJ/mol or kcal/mol")
     
     args = parser.parse_args()
     
@@ -763,7 +768,7 @@ if __name__ == "__main__":
             fasta.write_text(fasta_text)
             try:
                 asmc.build_logo(len(group_seq), fasta, outdir, n, args.prefix,
-                                args.format, args.resolution)
+                                args.format, args.resolution, args.units)
             except Exception as error:
                 logging.error(error)
         

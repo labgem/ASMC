@@ -691,7 +691,7 @@ def build_fasta(group: List[Tuple[str, str, Optional[Any]]]) -> str:
     return text
 
 def build_logo(lenght: int, fasta: Path, outdir: Path, n: int, prefix: str,
-               out_format: str, resolution: int) -> None:
+               out_format: str, resolution: int, units:str) -> None:
     """Build weblogo for a Group
 
     Args:
@@ -702,6 +702,7 @@ def build_logo(lenght: int, fasta: Path, outdir: Path, n: int, prefix: str,
         prefix (str): Prefix for the weblogo title
         out_format (str): eps or png
         resolution (int): image resolution
+        units (str): bits, nats, probabillity, kT, kJ/mol, kcal/mol
         
     Raises:
         Exception: Raised when an error has occured during the creation of the
@@ -718,6 +719,7 @@ def build_logo(lenght: int, fasta: Path, outdir: Path, n: int, prefix: str,
         options.logo_title = f"{prefix}{n}"
         options.fineprint = str(lenght)
         options.color_scheme = weblogo.chemistry
+        options.unit_name = units
         logo_format = weblogo.LogoFormat(data, options)
         if out_format == "png":
             logo_format.resolution = resolution
