@@ -3,7 +3,7 @@ import logging
 import re
 from itertools import groupby
 from pathlib import Path
-from typing import Dict, List, Tuple, Set, Union, Any, Optional
+from typing import Dict, List, Tuple, Set, Any, Optional
 
 import numpy as np
 from sklearn import preprocessing
