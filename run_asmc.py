@@ -431,33 +431,14 @@ def cmd_parser():
     
     return args
 
-##########
-## MAIN ##
-##########
-
-if __name__ == "__main__":
-    
-    args = cmd_parser()
+def run(args):
     
     start = datetime.datetime.now()
-
-    # Configure logging
-    if args.log is None:
-        logging.basicConfig(level=logging.INFO,
-                        format="%(levelname)s - %(asctime)s - %(message)s")
-        
-    else:
-        logging.basicConfig(level=logging.INFO,
-                    format="%(levelname)s - %(asctime)s - %(message)s",
-                    filename=args.log)
-        
+    
     # Read the Config file
     yml = read_yaml(args)
     
-    # Make output directory if doesn't exist 
     outdir = Path(args.outdir).absolute()
-    if not outdir.exists():
-       outdir.mkdir()
     
     if args.ref is not None:
         # check references
@@ -499,7 +480,7 @@ if __name__ == "__main__":
                 sys.exit(1)
                 
             ds.write_text(ds_text)
-            prank_results = run_prank(yml, ds, prank_output)
+            prank_results = run_prank(yml, ds, prank_output)  # noqa: F841
             
             try:
                 pocket_dict = asmc.extract_pocket(prank_output)
@@ -549,7 +530,7 @@ if __name__ == "__main__":
                 sys.exit(1)
             
             # Modeling step
-            ret_build = run_build_ali(ref_file, seq_path, pocket_file, outdir,
+            ret_build = run_build_ali(ref_file, seq_path, pocket_file, outdir,  # noqa: F841
                                       PID, args.log)
             job_file = Path.joinpath(outdir, "job_file.txt")
 
@@ -559,7 +540,7 @@ if __name__ == "__main__":
                 sys.exit(1)
             else:
                 start_model = datetime.datetime.now()
-                ret_model = modeling(job_file, outdir, args.threads, args.nb_models)
+                ret_model = modeling(job_file, outdir, args.threads, args.nb_models)  # noqa: F841
                 logging.info("modeling duration: "
                              f"{datetime.datetime.now() - start_model}")
                 
@@ -613,7 +594,6 @@ if __name__ == "__main__":
                     text = asmc.search_active_site_in_msa(Path(args.msa))
                 except FileNotFoundError as error:
                     logging.error(error)
-                    sys.exit(1)
                 multiple_alignment = Path.joinpath(outdir,
                                                    "active_sites_alignment.fasta")
                 multiple_alignment.write_text(text)
@@ -793,3 +773,30 @@ if __name__ == "__main__":
         outdir = Path(args.outdir).absolute() 
         
     logging.info(f"Total Elapsed time: {datetime.datetime.now() -  start}")
+
+def main():
+    args = cmd_parser()
+
+    # Configure logging
+    if args.log is None:
+        logging.basicConfig(level=logging.INFO,
+                        format="%(levelname)s - %(asctime)s - %(message)s")
+        
+    else:
+        logging.basicConfig(level=logging.INFO,
+                    format="%(levelname)s - %(asctime)s - %(message)s",
+                    filename=args.log)
+    
+    # Make output directory if doesn't exist 
+    outdir = Path(args.outdir).absolute()
+    if not outdir.exists():
+       outdir.mkdir()
+    
+    run(args)
+
+##########
+## MAIN ##
+##########
+
+if __name__ == "__main__":
+    main()
