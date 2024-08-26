@@ -335,6 +335,11 @@ def run_usalign(job, usalign, log):
             subprocess.run(job, stdout=fout, check=True)
             
 def cmd_parser():
+    """Build the Argument parser and return the arguments
+
+    Returns:
+        args (argparse.Namespace): the arguments
+    """
     
     parser = argparse.ArgumentParser()
     parser.add_argument("-o", "--outdir", type=str, metavar="", default="./",
