@@ -602,6 +602,7 @@ if __name__ == "__main__":
                     text = asmc.search_active_site_in_msa(Path(args.msa))
                 except FileNotFoundError as error:
                     logging.error(error)
+                    sys.exit(1)
                 multiple_alignment = Path.joinpath(outdir,
                                                    "active_sites_alignment.fasta")
                 multiple_alignment.write_text(text)
