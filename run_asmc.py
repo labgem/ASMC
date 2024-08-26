@@ -674,7 +674,7 @@ if __name__ == "__main__":
         if args.eps != "auto":
             try:
                 eps_list = [float(args.eps)]
-            except:
+            except Exception:
                 logging.error(f"argument -e, --eps invalid value : {args.eps}")
                 sys.exit(1)
                 
@@ -693,7 +693,7 @@ if __name__ == "__main__":
     else:
         try:
             min_samples = int(args.min_samples)
-        except:
+        except Exception:
             logging.error("argument --min-samples invalid value : "
                           f"{args.min_samples}")
             sys.exit(1)
@@ -734,7 +734,7 @@ if __name__ == "__main__":
         try:
             score = silhouette_score(X=data, labels=labels, metric="precomputed")
             logging.info(f"silhouette score: {score:.3f}")
-        except:
+        except Exception:
             logging.info("silhouette score: -")
         
         # Formats a list which is then used to write the output file
