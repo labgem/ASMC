@@ -373,12 +373,14 @@ def search_active_site_in_msa(msa: Path) -> str:
                 ref[split_line[0]]["pos"] = [int(x) -1 for x in split_line[1:]]
             else:
                 path = Path(line.strip())
-                if path.suffix in [".fasta", ".fa", ".faa"]:
+                if re.search("\\.(fasta|faa|fa).*", path.name):
                     aln = Path(line.strip())
                 else:
                     id_file = Path(line.strip())
-            
-    if not aln.exists():
+    if aln == "":
+        raise FileNotFoundError(f"An error has occured while reading '{msa}':\n"
+                                "no alignment in fasta format was found") 
+    elif not aln.exists():
         raise FileNotFoundError("An error has occured while reading "
                                 f"'{msa}':\n'{aln}' file not found")
     
