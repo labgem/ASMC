@@ -1,0 +1,38 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+py_module = ["asmc"]
+
+[project]
+name = "ASMC"
+description = "ASMC is a precision tool for deciphering the amino acid diversity that composes the active site of a given homologous protein family."
+version = "1.0.3"
+authors = [
+    {name = "Thomas Bailly"},
+    {name = "Eddy Elisee"}
+]
+readme = "README.md"
+license = {file="LICENSE.txt"}
+keywords = ["Bioinformatics", "Active site", "Bioinformatics Structural", "Clustering"]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Environment :: Console",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: CEA CNRS Inria Logiciel Libre License, version 2.1 (CeCILL-2.1)",
+    "Natural Language :: English",
+    "Operating System :: POSIX :: Linux",
+    "Programming Language :: Python :: 3",
+    "Topic :: Scientific/Engineering :: Bio-Informatics"
+]
+requires-python = ">=3.8"
+dependencies = [
+    "biopython>=1.81",
+    "numpy",
+    "scikit-learn",
+    "pyyaml",
+    "pillow",
+    "weblogo"
+]
+
+[tool.setuptools]
+packages = ["asmc"]
