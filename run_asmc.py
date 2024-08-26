@@ -1,16 +1,18 @@
-import asmc
-import sys
-import yaml
 import argparse
-import subprocess
-import multiprocessing
-import logging
 import datetime
+import logging
+import multiprocessing
 import re
+import sys
 import shutil
-import numpy as np
+import subprocess
 from pathlib import Path
+
+import numpy as np
+import yaml
 from sklearn.metrics import silhouette_score
+
+import asmc
 
 ###############
 ## Functions ##
