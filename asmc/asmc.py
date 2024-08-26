@@ -248,13 +248,13 @@ def extract_aligned_pos(id_ref: str, id_model: str,
             else:
                 if line.startswith("#"):
                     break
-                if ref == True:
+                if ref is True:
                     aln[id_ref] = line.strip()
                 else:
                     aln[id_model] = line.strip()
     
     # If keep_ref is True, we write the active site of the ref
-    if keep_ref == True:
+    if keep_ref is True:
         text += f">{id_ref}\n"
         # j is a counter for amino acids, incremented only when
         # an amino acid is encoutered
