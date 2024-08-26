@@ -333,12 +333,8 @@ def run_usalign(job, usalign, log):
     else:
         with open(output, "w") as fout:
             subprocess.run(job, stdout=fout, check=True)
-
-##########
-## MAIN ##
-##########
-
-if __name__ == "__main__":
+            
+def cmd_parser():
     
     parser = argparse.ArgumentParser()
     parser.add_argument("-o", "--outdir", type=str, metavar="", default="./",
@@ -427,6 +423,16 @@ if __name__ == "__main__":
                              ": bits, nats, probability, kT, kJ/mol or kcal/mol")
     
     args = parser.parse_args()
+    
+    return args
+
+##########
+## MAIN ##
+##########
+
+if __name__ == "__main__":
+    
+    args = cmd_parser()
     
     start = datetime.datetime.now()
 
