@@ -282,7 +282,7 @@ def extract_aligned_pos(id_ref: str, id_model: str,
     text += f">{id_model}\n"
     try:
         pocket = "".join([aln[id_model][i] for i in pos_str])
-    except:
+    except Exception:
         pocket = ""
     text += pocket + "\n"
     
@@ -523,7 +523,7 @@ def read_matrix(matrix: Path) -> Dict[str, Dict[str, int]]:
                 try:
                     scoring_dict[sl[0]] = {aa_order[i]:int(sl[1:][i])
                                         for i in range(len(aa_order))}
-                except:
+                except Exception:
                     raise RuntimeError("An error has occured while reading the "
                                        "distances matrix. The matrix may not "
                                        "be symetrical")
@@ -753,7 +753,7 @@ def merge_logo(outdir: Path, prefix: str, out_format: str) -> None:
         i = all_file.index(name_to_find)
         del all_file[i]
         all_file.append(name_to_find)
-    except:
+    except Exception:
         pass
     
     logo_list = []
