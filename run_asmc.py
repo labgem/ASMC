@@ -520,7 +520,7 @@ if __name__ == "__main__":
                 sys.exit(0)
     
     elif args.seqs is not None or args.models is not None:
-        logging.error(f"argument -r, --ref is required if -s, --seqs or -m, "
+        logging.error("argument -r, --ref is required if -s, --seqs or -m, "
                       "--models is used")
         sys.exit(1)
     
@@ -543,7 +543,7 @@ if __name__ == "__main__":
             job_file = Path.joinpath(outdir, "job_file.txt")
 
             if not job_file.exists():
-                logging.error(f"An error has occured during the preparation "
+                logging.error("An error has occured during the preparation "
                               "of the homology modeling")
                 sys.exit(1)
             else:
@@ -574,7 +574,7 @@ if __name__ == "__main__":
         if args.msa is None:
             
             pair_start = datetime.datetime.now()
-            logging.info(f"Start of Structural Pairwise Alignment with US-align")
+            logging.info("Start of Structural Pairwise Alignment with US-align")
             pairwise_dir = pairwise_alignment(yml=yml,
                                               models_file=models_file,
                                               outdir=outdir,
@@ -641,7 +641,7 @@ if __name__ == "__main__":
         try:
             weighted_pos = [int(x) for x in args.weighted_pos.split(",")]
         except ValueError:
-            logging.error(f"-w/--weighted-pos accept only integers separated "
+            logging.error("-w/--weighted-pos accept only integers separated "
                           "by ',' e.g: 1,6,12")
             sys.exit(1)
         logging.info(f"Weighted positions: {weighted_pos}")
@@ -657,7 +657,7 @@ if __name__ == "__main__":
     
     perc = np.percentile(data, [25, 50, 75])
     
-    logging.info(f"q1\tmed\tq3\tmean")
+    logging.info("q1\tmed\tq3\tmean")
     logging.info(f"{perc[0]:.3f}\t{perc[1]:.3f}\t{perc[2]:.3f}\t{data.mean():.3f}")
     
     # If test == 1, then create a list containing a set of eps values to be tested
