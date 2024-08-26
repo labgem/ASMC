@@ -78,7 +78,7 @@ def extract_pocket(outdir: Path) -> Dict[str, List[int]]:
     try:
         prediction = [f for f in outdir.iterdir() if f.match("*predictions*")][0]
     except IndexError:
-        raise RuntimeError(f"No predictions file after running p2rank")
+        raise RuntimeError("No predictions file after running p2rank")
     
     pred_arr = np.loadtxt(prediction, skiprows=1, delimiter=",",
                           converters={x:conv for x in range(11)},
@@ -327,7 +327,7 @@ def build_multiple_alignment(pairwise_dir: Path, ref_file: Path,
     count_ref = {ref:0 for ref in ref_pos}
     
     text = ""
-    logging.info(f"Build multiple alignment")
+    logging.info("Build multiple alignment")
     for i, alignment_file in enumerate(all_pairwise):
         id_model = alignment_file.stem.split("_-")[0]
         id_ref = alignment_file.stem.split("_-")[1]
@@ -778,7 +778,7 @@ def merge_logo(outdir: Path, prefix: str, out_format: str) -> None:
 
         img.paste(logo, top_left_coord)
         
-    output = outdir / f"groups_logo.png"
+    output = outdir / "groups_logo.png"
     
     img.save(output)
     
