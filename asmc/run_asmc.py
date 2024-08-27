@@ -458,6 +458,11 @@ def cmd_parser():
     extract_aa.add_argument("-g", "--group", type=int, metavar="",
                             help="group id, if not used, search in all groups")
     
+    stats_command = subcommand.add_parser("unique")
+    stats_command.add_argument("-f", "--file", metavar="", required=True,
+                               help="tsv group file with all active sites from "
+                               "asmc run")
+    
     args = parser.parse_args()
     
     return args
@@ -831,6 +836,9 @@ def main():
     elif args.subcommand == "extract":
         import extract_aa
         extract_aa.run(args)
+    elif args.subcommand == "unique":
+        import stats
+        stats.run(args)
 
 ##########
 ## MAIN ##
