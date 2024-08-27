@@ -433,6 +433,18 @@ def cmd_parser():
                              help="The units used for the y-axis [default: bits]"
                              ": bits, nats, probability, kT, kJ/mol or kcal/mol")
     
+    identity = subcommand.add_parser("identity")
+    identity_input = identity.add_mutually_exclusive_group(required=True)
+    identity_input.add_argument("-s", "--seqs", type=str, metavar="",
+                               help="multi fasta file")
+    identity_input.add_argument("-m", "--models", type=str, metavar="",
+                               help="file containing the reference structure paths")
+    identity_ref = identity.add_mutually_exclusive_group(required=True)
+    identity_ref.add_argument("-r", "--ref-str", type=str, metavar="",
+                             help="file contaning the reference structure paths")
+    identity_ref.add_argument("-R", "--ref-seq", type=str, metavar="",
+                             help="file containing the reference sequences id")
+    
     extract_aa = subcommand.add_parser("extract")
     extract_aa.add_argument("-f", "--file", type=str, metavar="", required=True,
                             help="output tsv file from asmc run command")
@@ -813,6 +825,9 @@ def main():
     
     if args.subcommand == "run":
         run(args)
+    elif args.subcommand == "identity":
+        import compute_perc_id
+        compute_perc_id.run(args)
     elif args.subcommand == "extract":
         import extract_aa
         extract_aa.run(args)
