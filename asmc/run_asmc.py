@@ -44,7 +44,7 @@ def read_yaml(args):
     """
     
     main_path = Path(__file__).absolute()
-    parent_path = main_path.parent
+    parent_path = main_path.parent.parent
     resources_path = Path.joinpath(parent_path, "resources")
     
     config_path = Path.joinpath(resources_path, "config_asmc.yml")
@@ -127,7 +127,7 @@ def run_build_ali(ref, seq, pocket, outdir, pid, log):
     main_path = Path(__file__).absolute()
     parent_path = main_path.parent
     # Path of the build_ali.py
-    src_path = Path.joinpath(parent_path, 'asmc', "build_ali.py")
+    src_path = Path.joinpath(parent_path, "build_ali.py")
 
     # Run the script   
      
@@ -168,7 +168,7 @@ def modeling(job_file, outdir, threads, n):
     main_path = Path(__file__).absolute()
     parent_path = main_path.parent
     # Path of the modeling.py
-    src_path = Path.joinpath(parent_path, 'asmc', "modeling.py")
+    src_path = Path.joinpath(parent_path, "modeling.py")
     
     # Create the models directory which will contains the best model of
     # each target (if it pass the identity cutoff)
