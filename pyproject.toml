@@ -36,3 +36,6 @@ dependencies = [
 
 [tool.setuptools]
 packages = ["asmc"]
+
+[project.scripts]
+asmc = "asmc.run_asmc:main"
