@@ -463,6 +463,12 @@ def cmd_parser():
                                help="tsv group file with all active sites from "
                                "asmc run")
     
+    to_xlsx = subcommand.add_parser("to_xlsx")
+    to_xlsx.add_argument("-o", "--outdir", type=str, default=Path.cwd().absolute(),
+                         metavar="", help="output directory")
+    to_xlsx.add_argument("-f", "--file", type=str, metavar="", required=True,
+                        help="tsv groups file from asmc run")
+    
     args = parser.parse_args()
     
     return args
@@ -839,6 +845,9 @@ def main():
     elif args.subcommand == "unique":
         import stats
         stats.run(args)
+    elif args.subcommand == "to_xlsx":
+        import groups_to_xlsx
+        groups_to_xlsx.run(args)
 
 ##########
 ## MAIN ##
