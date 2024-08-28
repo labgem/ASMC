@@ -74,7 +74,7 @@ def main():
     parser.add_argument("-o", "--outdir", type=str, default=Path.cwd().absolute(),
                         metavar="", help="output directory")
     parser.add_argument("-f", "--file", type=str, metavar="", required=True,
-                        help="groups.tsv from ASMC")
+                        help="tsv groups file from asmc run")
     
     args = parser.parse_args()
     
