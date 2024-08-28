@@ -469,6 +469,9 @@ def cmd_parser():
     to_xlsx.add_argument("-f", "--file", type=str, metavar="", required=True,
                         help="tsv groups file from asmc run")
     
+    # adds a subcommand without any argument
+    subcommand.add_parser("pymol")
+    
     args = parser.parse_args()
     
     return args
@@ -848,6 +851,10 @@ def main():
     elif args.subcommand == "to_xlsx":
         import groups_to_xlsx
         groups_to_xlsx.run(args)
+    elif args.subcommand == "pymol":
+        script_path = Path(__file__).absolute().parent / "zoom_active_site.py"
+        print("Inside the PyMol console use the following command to load new "
+              f"functions:\nrun {script_path}")
 
 ##########
 ## MAIN ##
