@@ -197,7 +197,7 @@ def build_comparison_data(id_dict: Optional[Dict[str, Union[str, int, None]]],
     """
     
     with open(file, "r") as f:
-        if empty == True:
+        if empty is True:
             for line in f:
                 split_line = line.strip().split()
                 id_dict[split_line[0]] = {"f1":split_line[1], "f2":None,
