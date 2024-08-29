@@ -39,7 +39,7 @@ def main():
     parser.add_argument("--f2", type=str, required=True, metavar="",
                         help="Group file 2")
     parser.add_argument("--id", type=str, metavar="", required=True,
-                        help="identity_target_ref.tsv")
+                        help="identity_targets_refs.tsv")
 
     args = parser.parse_args()
 
