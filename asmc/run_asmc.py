@@ -458,6 +458,14 @@ def cmd_parser():
     extract_aa.add_argument("-g", "--group", type=int, metavar="",
                             help="group id, if not used, search in all groups")
     
+    compare = subcommand.add_parser('compare')
+    compare.add_argument("--f1", type=str, required=True, metavar='',
+                         help="Group file 1")
+    compare.add_argument("--f2", type=str, required=True, metavar="",
+                        help="Group file 2")
+    compare.add_argument("--id", type=str, metavar="", required=True,
+                        help="identity_targets_refs.tsv")
+    
     stats_command = subcommand.add_parser("unique")
     stats_command.add_argument("-f", "--file", metavar="", required=True,
                                help="tsv group file with all active sites from "
@@ -845,6 +853,9 @@ def main():
     elif args.subcommand == "extract":
         import extract_aa
         extract_aa.run(args)
+    elif args.subcommand == "compare":
+        import compare_active_site
+        compare_active_site.run(args)
     elif args.subcommand == "unique":
         import stats
         stats.run(args)
