@@ -1,12 +1,14 @@
 [build-system]
-requires = ["setuptools >= 70.0"]
+requires = ["setuptools >= 70.0",
+            "setuptools-scm"]
 build-backend = "setuptools.build_meta"
 py_module = ["asmc"]
 
 [project]
 name = "ASMC"
 description = "ASMC is a precision tool for deciphering the amino acid diversity that composes the active site of a given homologous protein family."
-version = "1.0.3"
+#version = "1.0.3"
+dynamic = ["version"]
 authors = [
     {name = "Thomas Bailly"},
     {name = "Eddy Elisee"}
@@ -37,6 +39,9 @@ dependencies = [
 
 [tool.setuptools]
 packages = ["asmc"]
+
+[tool.setuptools.dynamic]
+version = {file = "VERSION"}
 
 [project.scripts]
 asmc = "asmc.run_asmc:main"
