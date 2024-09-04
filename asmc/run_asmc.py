@@ -660,11 +660,11 @@ def run(args):
                 logging.info("Start building active sites multiple alignment")
                 try:
                     text = asmc.search_active_site_in_msa(Path(args.msa))
-                except FileNotFoundError as error:
-                    logging.error(error)
-                multiple_alignment = Path.joinpath(outdir,
+                    multiple_alignment = Path.joinpath(outdir,
                                                    "active_sites_alignment.fasta")
-                multiple_alignment.write_text(text)
+                    multiple_alignment.write_text(text)
+                except Exception as error:
+                    logging.error(error)
             else:
                 logging.error(f"argument -M/--msa '{args.msa}' file not found")
 
