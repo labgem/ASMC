@@ -665,8 +665,10 @@ def run(args):
                     multiple_alignment.write_text(text)
                 except Exception as error:
                     logging.error(error)
+                    sys.exit(1)
             else:
                 logging.error(f"argument -M/--msa '{args.msa}' file not found")
+                sys.exit(1)
 
     # An active site alignment is provided
     else:
