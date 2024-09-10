@@ -348,7 +348,8 @@ def cmd_parser():
     
     # -------------------------- run subcommand ------------------------------ #
     
-    run = subcommand.add_parser("run")
+    run = subcommand.add_parser("run",
+                                description="Runs the main ASMC workflow")
     
     # Generals options
     run.add_argument("-o", "--outdir", type=str, metavar="", default="./",
@@ -449,7 +450,10 @@ def cmd_parser():
     
     # ------------------------ identity subcommand --------------------------- #
     
-    identity = subcommand.add_parser("identity")
+    identity = subcommand.add_parser("identity",
+                                     description="Calculates the percentage "
+                                     "identity between targets and references. "
+                                     "Can be either sequences or structures")
     
     # Mutually exclusive optons for Targets
     identity_input = identity.add_mutually_exclusive_group(required=True)
@@ -466,7 +470,10 @@ def cmd_parser():
                              help="file containing the reference sequences id")
     
     # ------------------------ extract subcommand ---------------------------- #
-    extract_aa = subcommand.add_parser("extract")
+    extract_aa = subcommand.add_parser("extract",
+                                       description="Extracts the lines of "
+                                       " that contain a specific amino acid or "
+                                       "residue type at a queried position")
     extract_aa.add_argument("-f", "--file", type=str, metavar="", required=True,
                             help="output tsv file from asmc run command")
     extract_aa.add_argument("-p", "--position", type=int, metavar="", required=True,
@@ -480,7 +487,9 @@ def cmd_parser():
                             help="group id, if not used, search in all groups")
     
     # ------------------------ compare subcommand ---------------------------- #
-    compare = subcommand.add_parser('compare')
+    compare = subcommand.add_parser('compare',
+                                    description="Returns the comparison of active"
+                                    " sites between two files")
     compare.add_argument("--f1", type=str, required=True, metavar='',
                          help="Group file 1")
     compare.add_argument("--f2", type=str, required=True, metavar="",
@@ -489,13 +498,17 @@ def cmd_parser():
                         help="identity_targets_refs.tsv")
     
     # ------------------------- unique subcommand ---------------------------- #
-    stats_command = subcommand.add_parser("unique")
+    stats_command = subcommand.add_parser("unique",
+                                          description="Returns the unique active"
+                                          "sites per group and some statistics")
     stats_command.add_argument("-f", "--file", metavar="", required=True,
                                help="tsv group file with all active sites from "
                                "asmc run")
     
     # ------------------------- to_xlsx subcommand --------------------------- #
-    to_xlsx = subcommand.add_parser("to_xlsx")
+    to_xlsx = subcommand.add_parser("to_xlsx",
+                                    description="Converts a tsv file to "
+                                    "xlsx format")
     to_xlsx.add_argument("-o", "--outdir", type=str, default=Path.cwd().absolute(),
                          metavar="", help="output directory")
     to_xlsx.add_argument("-f", "--file", type=str, metavar="", required=True,
@@ -503,7 +516,8 @@ def cmd_parser():
     
     # -------------------------- pymol subcommand ---------------------------- #
     # adds a subcommand without any argument
-    subcommand.add_parser("pymol")
+    subcommand.add_parser("pymol", description="Returns the path of the script"
+                          " to load into PyMol")
     
     args = parser.parse_args()
     
