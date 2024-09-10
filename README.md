@@ -24,22 +24,22 @@ Download the latest GitHub release to obtain the code: [https://github.com/labge
 - pillow
 - weblogo
 
-You can install the python dependencies with `pip`, `conda` or `mamba` with the following commands and the files given in the releases:
+You can install the python dependencies with `pip`, `conda` or `mamba` with the following commands (in the ASMC directory) and the files given in the releases:
 
 **pip**
+
 ```
-pip install -r requirements.txt
+pip install ./
 ```
 
-**conda**
+**conda** or **mamba**
 ```
 conda env create -n env_name -f env.yml
 ```
 
-**mamba**
-```
-mamba env create -n env_name -f env.yml
-```
+The command `pip install ./`, create the `asmc` command and adds it the User PATH environment variable. We therefore recommend that you also use this command after installation via conda or mamba. 
+
+It's recommended to use the `pip install ./` command after the installation via conda or mamba. Indeed, this creates `asmc` command and adds it to the User PATH envrionment variable.
 
 Installation via conda and mamba includes the MODELLER installation, but you still need to request the license key.
 
@@ -56,14 +56,14 @@ Installation via conda and mamba includes the MODELLER installation, but you sti
 In `ASMC/resources`, add a file exactly named `config_asmc.yml`. This file should contain 3 information:
 
 - the path to the `ASMC/resources/AA_distances.tsv`
-- the path of P2RANK executable
-- the path of USalign executable
+- the path of P2RANK executable (or it's name if the location is in the PATH)
+- the path of USalign executable (or it's name if the location is in the PATH)
 
 Example:
 ```yaml
 distances: "/home/User/ASMC/resources/AA_distances.tsv"
-usalign: "/home/User/bin/USALIGN/USalign"
-p2rank: "/home/User/bin/p2rank_2.4.1/prank"
+usalign: "USalign"  # location in the PATH e.g: /usr/bin ...
+p2rank: "/home/User/p2rank_2.4.1/prank"  # another location
 ```
 
 The keys should be identical to this example.
@@ -73,7 +73,7 @@ The keys should be identical to this example.
 Run ASMC in a blind way (unknown active site) using a multi fasta file that should contain at least 100 sequences for clustering to be sufficiently relevant.
 
 ```
-python ASMC/run_asmc.py --log run_asmc.log --threads 6 -r reference_file -s sequences.fasta
+asmc run --log run_asmc.log --threads 6 -r reference_file -s sequences.fasta
 ```
 
 `reference_file` should contains the path to the reference(s) structure(s), e.g:
