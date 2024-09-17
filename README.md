@@ -1,10 +1,13 @@
 <!-- ![ASMC logo](docs/asmc.png) -->
 <!-- center and resize the image with html syntax -->
 <p align="center">
-  <img src="docs/asmc.png" alt="ASMC logo" />
+  <img src="docs/asmc.png" alt="ASMC logo"
+       width="140"
+       height="178"
+    />
 </p>
 
-# ASMC
+# Active Site Modeling and Clustering (ASMC)
 
 ASMC combines (i) homology modeling of family members (MODELLER), (ii) ligand-binding pocket search (P2RANK), (iii) structural alignment of modeled active sites (USalign) and (iv) density-based spatial clustering of obtained alignments (DBSCAN) in a single command line. Clustering step can be carried out on either structural or sequence alignment.
 
