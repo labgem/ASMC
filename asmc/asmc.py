@@ -404,7 +404,7 @@ def search_active_site_in_msa(msa: Path) -> str:
         for line in f:
             if line.startswith(">"):
                 if "tr|" in line or "sp|" in line:
-                    print(line)
+
                     seq_id = re.search("\\w+\\|(\\w+)\\|\\w+", line).group(1)
                 else:
                     seq_id = line[1:].split()[0]
