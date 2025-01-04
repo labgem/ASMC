@@ -828,7 +828,7 @@ def run(args):
         # Get the number of groups and the number of sequences per group
         unique, count = np.unique(labels, return_counts=True)
         logging.info(f"Number of clusters: {len(unique)}")
-        logging.info({a:b for a, b in zip(unique, count)})
+        logging.info({int(a):int(b) for a, b in zip(unique, count)})
         
         # Silhouette score
         try:
