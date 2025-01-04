@@ -878,7 +878,7 @@ def run(args):
         
         # Merge logos in a single file
         if args.format == "png":
-            asmc.merge_logo(outdir, args.prefix, args.format)  
+            asmc.merge_logo(outdir, args.prefix, args.format, args.resolution)  
         outdir = Path(args.outdir).absolute() 
         
     logging.info(f"Total Elapsed time: {datetime.datetime.now() -  start}")
