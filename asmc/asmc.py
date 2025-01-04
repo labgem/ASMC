@@ -696,8 +696,8 @@ def build_fasta(group: List[Tuple[str, str, Optional[Any]]]) -> str:
     
     return text
         
-def build_logo(lenght:int, fasta:Path, outdir:Path, n:int, prefix:str,
-                out_format:str, dpi:int, units:str):
+def build_logo(lenght: int, fasta: Path, outdir: Path, n: int, prefix: str,
+                out_format: str, dpi: int, units: str):
     """Build sequence logo for a Group
 
     Args:
@@ -733,16 +733,15 @@ def build_logo(lenght:int, fasta:Path, outdir:Path, n:int, prefix:str,
         raise Exception("An error has occured when creating the logo of"
                         f" {prefix}{n}:\n{error}")
     
-def merge_logo(outdir: Path, prefix: str, out_format: str) -> None:
+def merge_logo(outdir: Path, prefix: str, out_format: str, dpi: int) -> None:
     """Merge single logo files
 
     Args:
         outdir (pathib.Path): Output directory
         prefix (str): Prefix for the weblogo title 
         out_format (str): png
+        dpi (int): image resolution
     """
-
-    IM_WIDTH = 500
     
     all_file = [f for f in outdir.iterdir() if f.match(f"{prefix}*.{out_format}")]
     
@@ -778,7 +777,7 @@ def merge_logo(outdir: Path, prefix: str, out_format: str) -> None:
         
     output = outdir / "groups_logo.png"
     
-    img.save(output, dpi=(300,300))
+    img.save(output, dpi=(dpi,dpi))
     
     for f in all_file:
         f.unlink()
