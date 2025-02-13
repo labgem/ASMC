@@ -430,23 +430,22 @@ def cmd_parser():
                             " them with commas, e.g: 1,6,12")
     
     # Sequence logo options
-    weblogo_opt = run.add_argument_group("Sequence logo options")
-    weblogo_opt.add_argument("--prefix", type=str, metavar="", default="G",
+    seqlogo_opt = run.add_argument_group("Sequence logo options")
+    seqlogo_opt.add_argument("--prefix", type=str, metavar="", default="G",
                              help="prefix for logo title before the cluster id"
                              " [default: G]")
-    weblogo_opt.add_argument("--format", type=str, metavar="", default="png",
-                             choices=["eps", "png"],
-                             help="file format for output logos, 'eps' or 'png'"
+    seqlogo_opt.add_argument("--format", type=str, metavar="", default="png",
+                             choices=["svg", "png"],
+                             help="file format for output logos, 'svg' or 'png'"
                              " [default: 'png']")
-    weblogo_opt.add_argument("--resolution", type=int, metavar="", default=300,
-                             choices=[150,300,600],
-                             help="image resolution (png only), 150, 300 or 600"
+    seqlogo_opt.add_argument("--resolution", type=int, metavar="", default=300,
+                             choices=[150,300],
+                             help="image resolution (png only), 150 or 300"
                              " dpi [default: 300]")
-    weblogo_opt.add_argument("--units", type=str, metavar="", default="bits",
-                             choices=["bits", "nats", "probability", "kT",
-                                      "kJ/mol", "kcal/mol"],
+    seqlogo_opt.add_argument("--units", type=str, metavar="", default="bits",
+                             choices=["bits", "probability"],
                              help="The units used for the y-axis [default: bits]"
-                             ": bits, nats, probability, kT, kJ/mol or kcal/mol")
+                             ": bits or probability")
     
     # ------------------------ identity subcommand --------------------------- #
     
@@ -829,7 +828,7 @@ def run(args):
         # Get the number of groups and the number of sequences per group
         unique, count = np.unique(labels, return_counts=True)
         logging.info(f"Number of clusters: {len(unique)}")
-        logging.info({a:b for a, b in zip(unique, count)})
+        logging.info({int(a):int(b) for a, b in zip(unique, count)})
         
         # Silhouette score
         try:
@@ -878,7 +877,7 @@ def run(args):
         
         # Merge logos in a single file
         if args.format == "png":
-            asmc.merge_logo(outdir, args.prefix, args.format)  
+            asmc.merge_logo(outdir, args.prefix, args.format, args.resolution)  
         outdir = Path(args.outdir).absolute() 
         
     logging.info(f"Total Elapsed time: {datetime.datetime.now() -  start}")

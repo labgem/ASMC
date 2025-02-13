@@ -11,10 +11,14 @@ from sklearn.cluster import DBSCAN
 from PIL import Image, ImageDraw
 
 import warnings
-with warnings.catch_warnings():
-    warnings.filterwarnings("ignore", category=DeprecationWarning)
-    import weblogo
-    
+
+from plotnine import ggplot, labs
+from plotnineseqsuite.logo import geom_logo
+from plotnineseqsuite.theme import theme_seq, theme
+warnings.filterwarnings("ignore", module="plotnine")    
+
+from utils import read_multi_fasta
+
 ###############
 ## Functions ##
 ###############
@@ -691,62 +695,53 @@ def build_fasta(group: List[Tuple[str, str, Optional[Any]]]) -> str:
         text += f">{elem[0]}\n{elem[1]}\n"
     
     return text
-
+        
 def build_logo(lenght: int, fasta: Path, outdir: Path, n: int, prefix: str,
-               out_format: str, resolution: int, units:str) -> None:
-    """Build weblogo for a Group
+                out_format: str, dpi: int, units: str):
+    """Build sequence logo for a Group
 
     Args:
         lenght (int): Number of sequences in the group
         fasta (pathlib.Path): The path of the fasta file
         outdir (pathib.Path): Output directory
         n (int): Cluster id
-        prefix (str): Prefix for the weblogo title
+        prefix (str): Prefix for the logo title
         out_format (str): eps or png
         resolution (int): image resolution
-        units (str): bits, nats, probabillity, kT, kJ/mol, kcal/mol
+        units (str): bits or probabillity
         
     Raises:
         Exception: Raised when an error has occured during the creation of the
-        logo. This can happen when an error occurs with ghoscript or other
-        weblogo dependencies
+        logo.
     """
     
-    with open(fasta, "r") as fin:
-        seqs = weblogo.read_seq_data(fin)
-    
+    seqs = list(read_multi_fasta(fasta).values())
+        
     try:
-        data = weblogo.LogoData.from_seqs(seqs)
-        options = weblogo.LogoOptions()
-        options.logo_title = f"{prefix}{n}"
-        options.fineprint = str(lenght)
-        options.color_scheme = weblogo.chemistry
-        options.unit_name = units
-        logo_format = weblogo.LogoFormat(data, options)
-        if out_format == "png":
-            logo_format.resolution = resolution
-            logo_bytes = weblogo.png_formatter(data, logo_format)
-            output = Path.joinpath(outdir, f"{prefix}{n}.png")
-        elif out_format == "eps":
-            logo_bytes = weblogo.eps_formatter(data, logo_format)
-            output = Path.joinpath(outdir, f"{prefix}{n}.eps")
-        
-        output.write_bytes(logo_bytes)
-        
+        logo_title = f"{prefix}{n}"
+        logo_caption = str(lenght)
+        logo_output = Path.joinpath(outdir, f"{logo_title}.{out_format}")
+        logo = (
+            ggplot() + geom_logo(seqs, seq_type='AA', method=units)
+            + theme_seq() + theme(dpi=dpi, figure_size=(1920/dpi, 1080/dpi),
+                                  legend_position="none")
+            + labs(title=logo_title, caption=logo_caption)
+        )
+        logo.save(logo_output)
+
     except Exception as error:
         raise Exception("An error has occured when creating the logo of"
                         f" {prefix}{n}:\n{error}")
     
-def merge_logo(outdir: Path, prefix: str, out_format: str) -> None:
+def merge_logo(outdir: Path, prefix: str, out_format: str, dpi: int) -> None:
     """Merge single logo files
 
     Args:
         outdir (pathib.Path): Output directory
         prefix (str): Prefix for the weblogo title 
         out_format (str): png
+        dpi (int): image resolution
     """
-
-    IM_WIDTH = 500
     
     all_file = [f for f in outdir.iterdir() if f.match(f"{prefix}*.{out_format}")]
     
@@ -782,7 +777,7 @@ def merge_logo(outdir: Path, prefix: str, out_format: str) -> None:
         
     output = outdir / "groups_logo.png"
     
-    img.save(output)
+    img.save(output, dpi=(dpi,dpi))
     
     for f in all_file:
         f.unlink()
