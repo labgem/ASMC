@@ -33,7 +33,7 @@ dependencies = [
     "scikit-learn",
     "pyyaml",
     "pillow",
-    "weblogo",
+    "plotnineseqsuite",
     "pytest"
 ]
 
