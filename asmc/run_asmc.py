@@ -1,5 +1,6 @@
 import argparse
 import datetime
+import importlib.resources
 import logging
 import multiprocessing
 import re
@@ -725,7 +726,9 @@ def run(args):
         output.write_text(text)
     
     logging.info("Reading Scoring Matrix")
-    matrix = Path(yml["distances"])
+    with importlib.resources.path(asmc, "AA_distances.tsv") as p:
+        matrix = p
+
     try:
         scoring_dict = asmc.read_matrix(matrix)
     except ValueError as error:
