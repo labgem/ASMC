@@ -568,12 +568,17 @@ def run(args):
         
         # Run p2rank to detect pocket
         else:
+            if len(ref_list) != 1:
+                logging.error("There are several references in the file : "
+                              f"{args.ref} Please keep only one to use "
+                              "p2rank's pocket detection.")
+                sys.exit(1)
             prank_output = Path.joinpath(outdir, "prank_output")
             if not prank_output.exists():
                 prank_output.mkdir()
             
             start = datetime.datetime.now()
-            logging.info("Using the 1st reference structure to detect pocket")
+            logging.info("Using the reference structure to detect pocket")
             
             try:
                 ds, ds_text = asmc.build_ds(ref_file, prank_output, args.chain)
