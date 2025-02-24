@@ -339,6 +339,7 @@ def cmd_parser():
     """Build the Argument parser and return the arguments
 
     Returns:
+        parser (argparse.ArgumentParser): the parser
         args (argparse.Namespace): the arguments
     """
     
@@ -519,7 +520,7 @@ def cmd_parser():
     
     args = parser.parse_args()
     
-    return args
+    return parser, args
 
 def run(args):
     
@@ -888,7 +889,7 @@ def run(args):
     logging.info(f"Total Elapsed time: {datetime.datetime.now() -  start}")
 
 def main():
-    args = cmd_parser()
+    parser, args = cmd_parser()
     
     if args.subcommand == "run":
         run(args)
@@ -911,6 +912,8 @@ def main():
         script_path = Path(__file__).absolute().parent / "zoom_active_site.py"
         print("Inside the PyMol console use the following command to load new "
               f"functions:\nrun {script_path}")
+    else:
+        parser.print_help()
 
 ##########
 ## MAIN ##
