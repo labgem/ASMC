@@ -459,14 +459,14 @@ def cmd_parser():
     identity_input.add_argument("-s", "--seqs", type=str, metavar="",
                                help="multi fasta file")
     identity_input.add_argument("-m", "--models", type=str, metavar="",
-                               help="file containing the reference structure paths")
+                               help="file containing paths to structures")
     
     # Mutually exclusive options for References
     identity_ref = identity.add_mutually_exclusive_group(required=True)
     identity_ref.add_argument("-r", "--ref-str", type=str, metavar="",
-                             help="file contaning the reference structure paths")
+                             help="file contaning paths to reference structures")
     identity_ref.add_argument("-R", "--ref-seq", type=str, metavar="",
-                             help="file containing the reference sequences id")
+                             help="file containing reference sequence ids")
     
     # ------------------------ extract subcommand ---------------------------- #
     extract_aa = subcommand.add_parser("extract",
