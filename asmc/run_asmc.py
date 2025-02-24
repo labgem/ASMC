@@ -470,9 +470,9 @@ def cmd_parser():
     
     # ------------------------ extract subcommand ---------------------------- #
     extract_aa = subcommand.add_parser("extract",
-                                       description="Extracts the lines of "
-                                       " that contain a specific amino acid or "
-                                       "residue type at a queried position")
+                                       description="Extracts the lines containing "
+                                       "a specific amino acid or residue type at"
+                                       " a queried position")
     extract_aa.add_argument("-f", "--file", type=str, metavar="", required=True,
                             help="output tsv file from asmc run command")
     extract_aa.add_argument("-p", "--position", type=int, metavar="", required=True,
