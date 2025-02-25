@@ -34,7 +34,8 @@ dependencies = [
     "pyyaml",
     "pillow",
     "plotnineseqsuite",
-    "pytest"
+    "pytest",
+    "xlsxwriter"
 ]
 
 [tool.setuptools]
