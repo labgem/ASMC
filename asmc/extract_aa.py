@@ -1,6 +1,6 @@
 import argparse
 import sys
-import utils
+from asmc import utils
 from pathlib import Path
 
 def run(args: argparse.Namespace):

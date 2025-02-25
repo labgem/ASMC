@@ -1,7 +1,7 @@
 from pathlib import Path
 import argparse
 import sys
-import utils
+from asmc import utils
 
 
 def run(args):

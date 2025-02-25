@@ -13,7 +13,7 @@ import numpy as np
 import yaml
 from sklearn.metrics import silhouette_score
 
-import asmc
+from asmc import asmc
 
 ###############
 ## Functions ##
@@ -894,19 +894,19 @@ def main():
     if args.subcommand == "run":
         run(args)
     elif args.subcommand == "identity":
-        import compute_perc_id
+        from asmc import compute_perc_id
         compute_perc_id.run(args)
     elif args.subcommand == "extract":
-        import extract_aa
+        from asmc import extract_aa
         extract_aa.run(args)
     elif args.subcommand == "compare":
-        import compare_active_site
+        from asmc import compare_active_site
         compare_active_site.run(args)
     elif args.subcommand == "unique":
-        import stats
+        from asmc import stats
         stats.run(args)
     elif args.subcommand == "to_xlsx":
-        import groups_to_xlsx
+        from asmc import groups_to_xlsx
         groups_to_xlsx.run(args)
     elif args.subcommand == "pymol":
         script_path = Path(__file__).absolute().parent / "zoom_active_site.py"

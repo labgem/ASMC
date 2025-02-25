@@ -1,5 +1,5 @@
 import argparse
-import utils
+from asmc import utils
 import sys
 from pathlib import Path
 
