@@ -21,15 +21,15 @@ ASMC combines (i) homology modeling of family members (MODELLER), (ii) ligand-bi
 
 ### Installation with conda and pip
 
-Download the latest GitHub release to obtain the code: [https://github.com/labgem/ASMC/releases](https://github.com/labgem/ASMC/releases) and extract the code from the archive
+Download the latest GitHub release to obtain the code ([https://github.com/labgem/ASMC/releases](https://github.com/labgem/ASMC/releases)) and extract the code from the archive.
 
-Then inside the ASMC directory use the following commands:
+Then, use the following commands from the ASMC/ directory:
 ```
 conda env create -n asmc -f env.yml
 pip install ./
 ```
 
-Conda installs all the python dependencies and two required third-party softwares:
+Conda will install all the python dependencies and two required third-party softwares:
 - MODELLER (you still need to request the license key)
 - USalign
 
@@ -52,7 +52,7 @@ Create a symbolic link to the prank script, e.g:
 ln -s p2rank_2.5/prank /usr/bin/prank
 ```
 
-Modify the script to work with a symbolic link, replaces line 22:
+Modify the script to work with a symbolic link. At line 22, replace:
 ```bash
 THIS_SCRIPT_DIR_REL_PATH=`dirname "${BASH_SOURCE[0]}"`
 ```
@@ -61,13 +61,13 @@ by
 THIS_SCRIPT_DIR_REL_PATH=$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")
 ```
 
-Now ASMC can use P2RANK to detect ligand binding pockets.
+Now, ASMC can use P2RANK to detect ligand binding pockets.
 
 ### Docker Image
 
 Download the Docker image in the latest GitHub release: [https://github.com/labgem/ASMC/releases](https://github.com/labgem/ASMC/releases)
 
-Then the following command load an image from the archive:
+Then, use the following command to load an image from the archive:
 ```
 docker load -i asmc-latest.tar
 ```
