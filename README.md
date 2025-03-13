@@ -86,4 +86,4 @@ asmc run --log run_asmc.log --threads 6 -r reference_file -s sequences.fasta
 <path>/RefB.pdb
 ```
 
-NB: For more details, see the [wiki]([https://github.com/labgem/ASMC/wiki/Options-and-Usages](https://github.com/labgem/ASMC/wiki)
+NB: For more details, see the [wiki](https://github.com/labgem/ASMC/wiki)
