@@ -52,7 +52,7 @@ Create a symbolic link to the prank script, e.g:
 ln -s p2rank_2.5/prank /usr/bin/prank
 ```
 
-Modify the script to work with a symbolic link. At line 22, replace:
+Modify the prank script to work with a symbolic link. At line 22, replace:
 ```bash
 THIS_SCRIPT_DIR_REL_PATH=`dirname "${BASH_SOURCE[0]}"`
 ```
