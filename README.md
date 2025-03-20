@@ -19,63 +19,58 @@ ASMC combines (i) homology modeling of family members (MODELLER), (ii) ligand-bi
 
 ## Installation
 
-### Download
+### Installation with conda and pip
 
-Download the latest GitHub release to obtain the code: [https://github.com/labgem/ASMC/releases](https://github.com/labgem/ASMC/releases)
+Download the latest GitHub release to obtain the code ([https://github.com/labgem/ASMC/releases](https://github.com/labgem/ASMC/releases)) and extract the code from the archive.
 
-### Python requirements
-
-- Python ≥ 3.8
-- biopython ≥ 1.81
-- numpy
-- scikit-learn
-- pyyaml
-- pillow
-- weblogo
-
-You can install the python dependencies with `pip`, `conda` or `mamba` with the following commands (in the ASMC directory) and the files given in the releases:
-
-**pip**
-
+Then, use the following commands from the ASMC/ directory:
 ```
+conda env create -n asmc -f env.yml
 pip install ./
 ```
 
-**conda** or **mamba**
-```
-conda env create -n env_name -f env.yml
-```
+Conda will install all the python dependencies and two required third-party softwares:
+- MODELLER (you still need to request the license key)
+- USalign
 
-The command `pip install ./`, create the `asmc` command and adds it the User PATH environment variable. We therefore recommend that you also use this command after installation via conda or mamba. 
+The pip command is required to create the `asmc` command and use ASMC.
 
-It's recommended to use the `pip install ./` command after the installation via conda or mamba. Indeed, this creates `asmc` command and adds it to the User PATH envrionment variable.
+It's also possible to use only the `pip install ./` command, but this will not install any third party software.
 
-Installation via conda and mamba includes the MODELLER installation, but you still need to request the license key.
-
-### External Software dependencies
+### Third party Software dependencies
 
 - P2RANK - for ligand-binding pocket detection ([https://github.com/rdk/p2rank](https://github.com/rdk/p2rank))
 - MODELLER - for homology modeling ([https://salilab.org/modeller/](https://salilab.org/modeller/))
-- USalign - for structural alignment ([https://zhanggroup.org/US-align/](https://zhanggroup.org/US-align/))
+- USalign - for structural alignment ([https://github.com/pylelab/USalign](https://github.com/pylelab/USalign))
 
- Please follow the links above and the instructions given by their authors.
+#### P2RANK setup
 
-## Configuration
+Download the p2rank tar.gz file (e.g: p2rank_2.5.tar.gz) and extract the archive.
 
-In `ASMC/resources`, add a file exactly named `config_asmc.yml`. This file should contain 3 information:
-
-- the path to the `ASMC/resources/AA_distances.tsv`
-- the path of P2RANK executable (or it's name if the location is in the PATH)
-- the path of USalign executable (or it's name if the location is in the PATH)
-
-Example:
-```yaml
-distances: "/home/User/ASMC/resources/AA_distances.tsv"
-usalign: "USalign"  # location in the PATH e.g: /usr/bin ...
-p2rank: "/home/User/p2rank_2.4.1/prank"  # another location
+Create a symbolic link to the prank script, e.g:
+```
+ln -s p2rank_2.5/prank /usr/bin/prank
 ```
 
-The keys should be identical to this example.
+Modify the prank script to work with a symbolic link. At line 22, replace:
+```bash
+THIS_SCRIPT_DIR_REL_PATH=`dirname "${BASH_SOURCE[0]}"`
+```
+by
+```bash
+THIS_SCRIPT_DIR_REL_PATH=$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")
+```
+
+Now, ASMC can use P2RANK to detect ligand binding pockets.
+
+### Docker Image
+
+Download the Docker image in the latest GitHub release: [https://github.com/labgem/ASMC/releases](https://github.com/labgem/ASMC/releases)
+
+Then, use the following command to load an image from the archive:
+```
+docker load -i asmc-latest.tar
+```
 
 ## Quick Usage
 
@@ -91,4 +86,4 @@ asmc run --log run_asmc.log --threads 6 -r reference_file -s sequences.fasta
 <path>/RefB.pdb
 ```
 
-NB: For more details, see the [wiki](https://github.com/labgem/ASMC/wiki/Options-and-Usages)
+NB: For more details, see the [wiki](https://github.com/labgem/ASMC/wiki)

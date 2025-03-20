@@ -1,5 +1,6 @@
 import argparse
 import datetime
+import importlib.resources
 import logging
 import multiprocessing
 import re
@@ -12,7 +13,7 @@ import numpy as np
 import yaml
 from sklearn.metrics import silhouette_score
 
-import asmc
+from asmc import asmc
 
 ###############
 ## Functions ##
@@ -76,13 +77,12 @@ def read_yaml(args):
     
     return yml
 
-def run_prank(yml, ds, outdir):
+def run_prank(ds, outdir):
     """Run p2rank
     
     Execute a p2rank process with the subprocess module
 
     Args:
-        yml (dict): a dictionary corresponding to the content of the yaml file
         ds (pathlib.Path): Path to the dataset file
         outdir (pathlib.Path): Path to the output directory
 
@@ -90,7 +90,7 @@ def run_prank(yml, ds, outdir):
         result (subprocess.CompletedProcess): The completed process
     """
     
-    P2RANK = yml["p2rank"]
+    P2RANK = "prank"
     
     # Execute p2rank
     command = f"{P2RANK} predict {ds} -o {outdir}"
@@ -243,11 +243,10 @@ def clean_models_file(models_file, set_id):
                 
     models_file.write_text(conserved_lines)
 
-def pairwise_alignment(yml, models_file, outdir, threads, log):
+def pairwise_alignment(models_file, outdir, threads, log):
     """Runs USalign in parallel
 
     Args:
-        yml (dict): a dictionary corresponding to the content of the yaml file
         models_file (pathlib.Path): Path to the models file
         outdir (pathlib.Path): Path to the output directory
         threads (int): Number of parallel jobs
@@ -258,7 +257,7 @@ def pairwise_alignment(yml, models_file, outdir, threads, log):
     """
     
     # Name or path of USalign executable
-    USALIGN = yml["usalign"]
+    USALIGN = "USalign"
     # USalign output directories
     pairwise_dir = Path.joinpath(outdir, "pairwise")
     superposition_dir = Path.joinpath(outdir, "superposition")
@@ -340,6 +339,7 @@ def cmd_parser():
     """Build the Argument parser and return the arguments
 
     Returns:
+        parser (argparse.ArgumentParser): the parser
         args (argparse.Namespace): the arguments
     """
     
@@ -459,20 +459,20 @@ def cmd_parser():
     identity_input.add_argument("-s", "--seqs", type=str, metavar="",
                                help="multi fasta file")
     identity_input.add_argument("-m", "--models", type=str, metavar="",
-                               help="file containing the reference structure paths")
+                               help="file containing paths to structures")
     
     # Mutually exclusive options for References
     identity_ref = identity.add_mutually_exclusive_group(required=True)
     identity_ref.add_argument("-r", "--ref-str", type=str, metavar="",
-                             help="file contaning the reference structure paths")
+                             help="file contaning paths to reference structures")
     identity_ref.add_argument("-R", "--ref-seq", type=str, metavar="",
-                             help="file containing the reference sequences id")
+                             help="file containing reference sequence ids")
     
     # ------------------------ extract subcommand ---------------------------- #
     extract_aa = subcommand.add_parser("extract",
-                                       description="Extracts the lines of "
-                                       " that contain a specific amino acid or "
-                                       "residue type at a queried position")
+                                       description="Extracts the lines containing "
+                                       "a specific amino acid or residue type at"
+                                       " a queried position")
     extract_aa.add_argument("-f", "--file", type=str, metavar="", required=True,
                             help="output tsv file from asmc run command")
     extract_aa.add_argument("-p", "--position", type=int, metavar="", required=True,
@@ -520,7 +520,7 @@ def cmd_parser():
     
     args = parser.parse_args()
     
-    return args
+    return parser, args
 
 def run(args):
     
@@ -542,7 +542,7 @@ def run(args):
     start = datetime.datetime.now()
     
     # Read the Config file
-    yml = read_yaml(args)
+    #yml = read_yaml(args)
     
     outdir = Path(args.outdir).absolute()
     
@@ -568,13 +568,18 @@ def run(args):
                 sys.exit(1)
         
         # Run p2rank to detect pocket
-        else:            
+        else:
+            if len(ref_list) != 1:
+                logging.error("There are several references in the file : "
+                              f"{args.ref} Please keep only one to use "
+                              "p2rank's pocket detection.")
+                sys.exit(1)
             prank_output = Path.joinpath(outdir, "prank_output")
             if not prank_output.exists():
                 prank_output.mkdir()
             
             start = datetime.datetime.now()
-            logging.info("Using the 1st reference structure to detect pocket")
+            logging.info("Using the reference structure to detect pocket")
             
             try:
                 ds, ds_text = asmc.build_ds(ref_file, prank_output, args.chain)
@@ -586,7 +591,7 @@ def run(args):
                 sys.exit(1)
                 
             ds.write_text(ds_text)
-            prank_results = run_prank(yml, ds, prank_output)  # noqa: F841
+            prank_results = run_prank(ds, prank_output)  # noqa: F841
             
             try:
                 pocket_dict = asmc.extract_pocket(prank_output)
@@ -673,8 +678,7 @@ def run(args):
             
             pair_start = datetime.datetime.now()
             logging.info("Start of Structural Pairwise Alignment with US-align")
-            pairwise_dir = pairwise_alignment(yml=yml,
-                                              models_file=models_file,
+            pairwise_dir = pairwise_alignment(models_file=models_file,
                                               outdir=outdir,
                                               threads=args.threads,
                                               log=args.log)
@@ -725,7 +729,9 @@ def run(args):
         output.write_text(text)
     
     logging.info("Reading Scoring Matrix")
-    matrix = Path(yml["distances"])
+    with importlib.resources.path(asmc, "AA_distances.tsv") as p:
+        matrix = p
+
     try:
         scoring_dict = asmc.read_matrix(matrix)
     except ValueError as error:
@@ -883,29 +889,31 @@ def run(args):
     logging.info(f"Total Elapsed time: {datetime.datetime.now() -  start}")
 
 def main():
-    args = cmd_parser()
+    parser, args = cmd_parser()
     
     if args.subcommand == "run":
         run(args)
     elif args.subcommand == "identity":
-        import compute_perc_id
+        from asmc import compute_perc_id
         compute_perc_id.run(args)
     elif args.subcommand == "extract":
-        import extract_aa
+        from asmc import extract_aa
         extract_aa.run(args)
     elif args.subcommand == "compare":
-        import compare_active_site
+        from asmc import compare_active_site
         compare_active_site.run(args)
     elif args.subcommand == "unique":
-        import stats
+        from asmc import stats
         stats.run(args)
     elif args.subcommand == "to_xlsx":
-        import groups_to_xlsx
+        from asmc import groups_to_xlsx
         groups_to_xlsx.run(args)
     elif args.subcommand == "pymol":
         script_path = Path(__file__).absolute().parent / "zoom_active_site.py"
         print("Inside the PyMol console use the following command to load new "
               f"functions:\nrun {script_path}")
+    else:
+        parser.print_help()
 
 ##########
 ## MAIN ##

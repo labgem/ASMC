@@ -17,7 +17,7 @@ from plotnineseqsuite.logo import geom_logo
 from plotnineseqsuite.theme import theme_seq, theme
 warnings.filterwarnings("ignore", module="plotnine")    
 
-from utils import read_multi_fasta
+from asmc.utils import read_multi_fasta
 
 ###############
 ## Functions ##

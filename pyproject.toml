@@ -33,8 +33,9 @@ dependencies = [
     "scikit-learn",
     "pyyaml",
     "pillow",
-    "weblogo",
-    "pytest"
+    "plotnineseqsuite",
+    "pytest",
+    "xlsxwriter"
 ]
 
 [tool.setuptools]
