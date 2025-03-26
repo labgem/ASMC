@@ -9,7 +9,7 @@
 
 # Active Site Modeling and Clustering (ASMC)
 
-ASMC combines (i) homology modeling of family members (MODELLER), (ii) ligand-binding pocket search (P2RANK), (iii) structural alignment of modeled active sites (USalign) and (iv) density-based spatial clustering of obtained alignments (DBSCAN) in a single command line. Clustering step can be carried out on either structural or sequence alignment.
+ASMC combines (i) homology modeling of family members (MODELLER), (ii) ligand-binding pocket search (P2RANK), (iii) structural alignment of modeled active sites (USalign) and (iv) density-based spatial clustering of obtained alignments (DBSCAN) in a single command line. The clustering step can be carried out on either structural or sequence alignment and users can directly analyse their own set of protein 3D structures (e.g. AI-based models) by skipping the homology modeling step.
 
 <!-- ![ASMC workflow](docs/ASMC_workflow.svg) -->
 <!-- center and resize the image with html syntax -->
@@ -37,7 +37,7 @@ The pip command is required to create the `asmc` command and use ASMC.
 
 It's also possible to use only the `pip install ./` command, but this will not install any third party software.
 
-### Third party Software dependencies
+### Third-party software dependencies
 
 - P2RANK - for ligand-binding pocket detection ([https://github.com/rdk/p2rank](https://github.com/rdk/p2rank))
 - MODELLER - for homology modeling ([https://salilab.org/modeller/](https://salilab.org/modeller/))
@@ -47,12 +47,12 @@ It's also possible to use only the `pip install ./` command, but this will not i
 
 Download the p2rank tar.gz file (e.g: p2rank_2.5.tar.gz) and extract the archive.
 
-Create a symbolic link to the prank script, e.g:
+Create a symbolic link related to the prank script, e.g:
 ```
 ln -s <path_to>/p2rank_2.5/prank /usr/bin/prank
 ```
 
-Modify the prank script to work with a symbolic link. At line 22, replace:
+Modify the previous prank script to work with a symbolic link. At line 22, replace:
 ```bash
 THIS_SCRIPT_DIR_REL_PATH=`dirname "${BASH_SOURCE[0]}"`
 ```
