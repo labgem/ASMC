@@ -9,7 +9,9 @@
 
 # Active Site Modeling and Clustering (ASMC)
 
-ASMC combines (i) homology modeling of family members (MODELLER), (ii) ligand-binding pocket search (P2RANK), (iii) structural alignment of modeled active sites (USalign) and (iv) density-based spatial clustering of obtained alignments (DBSCAN) in a single command line. The clustering step can be carried out on either structural or sequence alignment and users can directly analyse their own set of protein 3D structures (e.g. AI-based models) by skipping the homology modeling step.
+ASMC combines (i) homology modeling of family members (MODELLER), (ii) ligand-binding pocket search (P2RANK), (iii) structural alignment of modeled active sites (USalign) and (iv) density-based spatial clustering of obtained alignments (DBSCAN) in a single command line.
+
+The clustering step can be carried out on either structural or sequence alignment and users can directly analyse their own set of protein 3D structures (e.g. AI-based models) by skipping the homology modeling step.
 
 <!-- ![ASMC workflow](docs/ASMC_workflow.svg) -->
 <!-- center and resize the image with html syntax -->
