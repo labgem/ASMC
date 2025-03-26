@@ -49,7 +49,7 @@ Download the p2rank tar.gz file (e.g: p2rank_2.5.tar.gz) and extract the archive
 
 Create a symbolic link to the prank script, e.g:
 ```
-ln -s p2rank_2.5/prank /usr/bin/prank
+ln -s <path_to>/p2rank_2.5/prank /usr/bin/prank
 ```
 
 Modify the prank script to work with a symbolic link. At line 22, replace:
