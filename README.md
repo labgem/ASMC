@@ -51,7 +51,7 @@ Download the p2rank tar.gz file (e.g: p2rank_2.5.tar.gz) and extract the archive
 
 Create a symbolic link related to the prank script, e.g:
 ```
-ln -s <path_to>/p2rank_2.5/prank /usr/bin/prank
+ln -s <full_path_to>/p2rank_2.5/prank /usr/bin/prank
 ```
 
 Modify the previous prank script to work with a symbolic link. At line 22, replace:
@@ -64,15 +64,6 @@ THIS_SCRIPT_DIR_REL_PATH=$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")
 ```
 
 Now, ASMC can use P2RANK to detect ligand binding pockets.
-
-### Docker Image
-
-Download the Docker image in the latest GitHub release: [https://github.com/labgem/ASMC/releases](https://github.com/labgem/ASMC/releases)
-
-Then, use the following command to load an image from the archive:
-```
-docker load -i asmc-latest.tar
-```
 
 ## Quick Usage
 
