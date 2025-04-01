@@ -65,6 +65,10 @@ THIS_SCRIPT_DIR_REL_PATH=$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")
 
 Now, ASMC can use P2RANK to detect ligand binding pockets.
 
+### Installation with Docker
+
+Follow the instructions in the [Docker section of the wiki](https://github.com/labgem/ASMC/wiki/Docker)
+
 ## Quick Usage
 
 Run ASMC in a blind way (unknown active site) using a multi fasta file that should contain at least 100 sequences for clustering to be sufficiently relevant.
